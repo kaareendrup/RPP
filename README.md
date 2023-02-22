@@ -1,6 +1,6 @@
 # The Reconstruction Performance Plotting Library (RPP)
 
-Functionality for studying the performance of data reconstruction model developed for (but not limited to) machine learning reconstruction of events from particle physics experiments.
+Library for studying the performance of data reconstruction model developed for (but not limited to) machine learning reconstruction of events from particle physics experiments.
 
 #### Simple example
 
@@ -8,7 +8,7 @@ Functionality for studying the performance of data reconstruction model develope
 from RPP.plotters.classification_plotter import ClassificationPlotter
 
 # Initialize plotter
-FlavourPlotter = ClassificationPlotter('/my/plot/dir', 'my_target')
+FlavourPlotter = ClassificationPlotter('/my/plot/dir', 'target_label')
 
 # Add model predictions
 FlavourPlotter.add_results('my_predictions.csv', 'my_data.db', 'ModelName')
