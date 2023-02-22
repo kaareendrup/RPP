@@ -400,8 +400,7 @@ class ClassificationPlotter(Plotter):
                     ratios = counts_false/counts_true
                     bin_centers = bins_true[:-1] + (bins_true[1]-bins_true[0])/2
 
-                    axs[1].plot(bin_centers, ratios, color=color_comp, marker='.', ls='dotted')
-
+                    axs[1].plot(bin_centers, ratios, color=color_comp, marker='.', ls='dotted', label=labels[0])
 
                 axs[0].grid(linestyle='dotted')
                 axs[0].legend(fontsize=12)
