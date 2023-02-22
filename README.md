@@ -1,6 +1,6 @@
 # The Reconstruction Performance Plotting Library (RPP)
 
-Library for studying the performance of data reconstruction model developed for (but not limited to) machine learning reconstruction of events from particle physics experiments.
+Library for studying the performance of data reconstruction models developed for (but not limited to) machine learning reconstruction of events from particle physics experiments.
 
 #### Simple example
 
