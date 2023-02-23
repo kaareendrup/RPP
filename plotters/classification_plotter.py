@@ -410,6 +410,7 @@ class ClassificationPlotter(Plotter):
                 axs[1].set_ylim(0)
                 axs[1].grid(linestyle='dotted')
                 axs[1].set_xlabel('R (cm)', fontsize=12)
+                axs[1].legend(fontsize=12)
                 
             axses[0,0].set_ylabel('Frequency', fontsize=12)
             axses[1,0].set_ylabel('Ratio', fontsize=12)
