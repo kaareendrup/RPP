@@ -125,7 +125,7 @@ class ClassificationPlotter(Plotter):
 
                     # Decorate subplot
                     ax.set_xlabel('Model score', fontsize=12)
-                    ax.set_ylabel('Frequency', fontsize=12)
+                    ax.set_ylabel('Counts', fontsize=12)
                     ax.set_title('Distribution of model score', fontsize=16)
 
                     if log:
@@ -412,7 +412,7 @@ class ClassificationPlotter(Plotter):
                 axs[1].set_xlabel('R (cm)', fontsize=12)
                 axs[1].legend(fontsize=12)
                 
-            axses[0,0].set_ylabel('Frequency', fontsize=12)
+            axses[0,0].set_ylabel('Counts', fontsize=12)
             axses[1,0].set_ylabel('Ratio', fontsize=12)
                 
             plt.savefig(self._plot_dir + model._title + "_scores_by_distance.png")

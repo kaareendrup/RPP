@@ -158,7 +158,7 @@ class RegressionPlotter(Plotter):
             ax_bot.set_xlabel(self._target + r"$_\mathrm{true}$" + self._unit_str, fontsize=12)
             ax_top.set_ylabel(r'$\sigma _\mathrm{' + label + '}$', fontsize=12)
             ax_back.hist(model._truths, bins=n_residual_bins, color='lightgray')
-            ax_back.set_ylabel('Frequency', fontsize=12)
+            ax_back.set_ylabel('Counts', fontsize=12)
             ax_top.legend()
 
             ax_top.set_title('Model performance on {}'.format(self._target), fontsize=12)
