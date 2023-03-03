@@ -138,7 +138,6 @@ class Plotter:
         if benchmark_file[-4:] == '.csv':
 
             # Load data
-            # assert database_file is not None, "No database specified. Please provide database containing event energy."
             preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(benchmark_file, database_file)
 
         elif benchmark_file[-3:] == '.db':
