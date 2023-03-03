@@ -24,7 +24,7 @@ class Plotter:
         self._benchmarks_list = []
 
 
-    def load_csv(self, file, database, reverse=False):
+    def load_csv(self, file, database=None, reverse=False):
         
         data = pd.read_csv(file)
         data.sort_values('event_no', inplace=True, ignore_index=True)
@@ -35,28 +35,36 @@ class Plotter:
 
         # Apply the relevant cuts
         if self._cut_functions is not None:
-            for function in self._cut_functions:
-                event_nos = function.cut(event_nos, database)
+            if database is not None:
+                for function in self._cut_functions:
+                    event_nos = function.cut(event_nos, database)
 
-                # Replace original truths if the first cut is cc/nc
-                if function._name in ['cc', 'nc']:
-                    original_truths = data[data['event_no'].isin(event_nos)][target].to_numpy()
+                    # Replace original truths if the first cut is cc/nc
+                    if function._name in ['cc', 'nc']:
+                        original_truths = data[data['event_no'].isin(event_nos)][target].to_numpy()
 
-            data = data[data['event_no'].isin(event_nos)]
+                data = data[data['event_no'].isin(event_nos)]
+            else:
+                print('No database specified, unable to apply cuts')
 
         preds, truths = data[target+'_pred'].to_numpy(), data[target].to_numpy()
         
-        try:
-            features_query = 'SELECT fLE, fVx, fVy, fVz, event_no FROM truth WHERE event_no IN {}'.format(tuple(event_nos))
-            features = query_database(database, features_query)
-            features.sort_values('event_no', inplace=True, ignore_index=True)
-            energy = features['fLE'].to_numpy()
-            lepton_pos = features[['fVx', 'fVy', 'fVz']].to_numpy()
-        except:
-            features_query = 'SELECT mc_e, event_no FROM fiTQun WHERE event_no IN {}'.format(tuple(event_nos))
-            features = query_database(database, features_query)
-            features.sort_values('event_no', inplace=True, ignore_index=True)
-            energy = features['mc_e'].to_numpy()
+        if database is not None:
+            try:
+                features_query = 'SELECT fLE, fVx, fVy, fVz, event_no FROM truth WHERE event_no IN {}'.format(tuple(event_nos))
+                features = query_database(database, features_query)
+                features.sort_values('event_no', inplace=True, ignore_index=True)
+                energy = features['fLE'].to_numpy()
+                lepton_pos = features[['fVx', 'fVy', 'fVz']].to_numpy()
+            except:
+                features_query = 'SELECT mc_e, event_no FROM fiTQun WHERE event_no IN {}'.format(tuple(event_nos))
+                features = query_database(database, features_query)
+                features.sort_values('event_no', inplace=True, ignore_index=True)
+                energy = features['mc_e'].to_numpy()
+                lepton_pos = None
+        else:
+            print('No database specified, no energy and position extracted')
+            energy = None
             lepton_pos = None
 
 
@@ -94,7 +102,7 @@ class Plotter:
         return model
 
 
-    def add_results(self, results_file, database_file, model_name, color=None, target_rates=None, target_cuts=None, reverse=False):
+    def add_results(self, results_file, model_name, database_file=None, color=None, target_rates=None, target_cuts=None, reverse=False):
 
         # Load data from csv
         preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(results_file, database_file, reverse)
@@ -130,7 +138,7 @@ class Plotter:
         if benchmark_file[-4:] == '.csv':
 
             # Load data
-            assert database_file is not None, "No database specified. Please provide database containing event energy."
+            # assert database_file is not None, "No database specified. Please provide database containing event energy."
             preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(benchmark_file, database_file)
 
         elif benchmark_file[-3:] == '.db':

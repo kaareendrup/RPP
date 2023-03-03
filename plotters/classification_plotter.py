@@ -207,38 +207,42 @@ class ClassificationPlotter(Plotter):
 
             # Loop over models and add data to plot
             for m, ax in zip([model, benchmark], axs):
+                if m._energy is None:
+                    print("{}: No energy found. Skipping.".format(m._name))
+                    continue
 
-                m_ones = m._predictions[np.where(m._truths == 1)]
-                m_zeros = m._predictions[np.where(m._truths == 0)]
-                e_ones = m._energy[np.where(m._truths == 1)]
-                e_zeros = m._energy[np.where(m._truths == 0)]
+                else:
+                    m_ones = m._predictions[np.where(m._truths == 1)]
+                    m_zeros = m._predictions[np.where(m._truths == 0)]
+                    e_ones = m._energy[np.where(m._truths == 1)]
+                    e_zeros = m._energy[np.where(m._truths == 0)]
 
-                # Get correct opacity for plotting
-                alpha = calculate_alpha(m._predictions)
+                    # Get correct opacity for plotting
+                    alpha = calculate_alpha(m._predictions)
 
-                ax.scatter(e_ones, m_ones, color=m._color, marker='.', alpha=alpha, label=self._target_label +r' '+ m._label)
-                ax.scatter(e_zeros, m_zeros, color='k', marker='.', alpha=alpha, label=self._background_label +r' '+ m._label)
+                    ax.scatter(e_ones, m_ones, color=m._color, marker='.', alpha=alpha, label=self._target_label +r' '+ m._label)
+                    ax.scatter(e_zeros, m_zeros, color='k', marker='.', alpha=alpha, label=self._background_label +r' '+ m._label)
 
-                # Force different y-axis if the data has outliers
-                if shift_y:
-                    ymax = max([np.percentile(m_ones, 99.9), np.percentile(m_zeros, 99.9)])
-                    ymin = min([np.percentile(m_ones, .1), np.percentile(m_zeros, .1)])
-                    ymean = (np.mean(m_ones)+np.mean(m_zeros))/2
-                    dist = max([ymax-ymean, ymean-ymin])
-                    ax.set_ylim(ymean-dist*1.1, ymean+dist*1.1)
+                    # Force different y-axis if the data has outliers
+                    if shift_y:
+                        ymax = max([np.percentile(m_ones, 99.9), np.percentile(m_zeros, 99.9)])
+                        ymin = min([np.percentile(m_ones, .1), np.percentile(m_zeros, .1)])
+                        ymean = (np.mean(m_ones)+np.mean(m_zeros))/2
+                        dist = max([ymax-ymean, ymean-ymin])
+                        ax.set_ylim(ymean-dist*1.1, ymean+dist*1.1)
 
-                # Add rate info to plot
-                self.add_rate_info([ax], m, horizontal=True)
+                    # Add rate info to plot
+                    self.add_rate_info([ax], m, horizontal=True)
 
-                # Decorate plot
-                ax.set_axisbelow(True)
-                ax.grid(linestyle='dotted')
-                ax.set_xlabel('Energy [MeV]', fontsize=12)
-                ax.set_ylabel('Model score', fontsize=12)
-                ax.set_title('Distribution of model score by lepton energy', fontsize=16)
-                leg = ax.legend(fontsize=12, loc='upper center', bbox_to_anchor=[.5,.90], markerscale=2)
-                for lh in leg.legendHandles: 
-                    lh.set_alpha(1)
+                    # Decorate plot
+                    ax.set_axisbelow(True)
+                    ax.grid(linestyle='dotted')
+                    ax.set_xlabel('Energy [MeV]', fontsize=12)
+                    ax.set_ylabel('Model score', fontsize=12)
+                    ax.set_title('Distribution of model score by lepton energy', fontsize=16)
+                    leg = ax.legend(fontsize=12, loc='upper center', bbox_to_anchor=[.5,.90], markerscale=2)
+                    for lh in leg.legendHandles: 
+                        lh.set_alpha(1)
 
             plt.savefig(self._plot_dir + models[0]._title + "_energy_score.png")
             plt.close()
@@ -366,54 +370,58 @@ class ClassificationPlotter(Plotter):
 
         # Loop over models with the respective cuts
         for model, benchmark, cuts_list in zip(models, benchmarks, thresholds):
+            if model._lepton_pos is None:
+                print("{}: No energy found. Skipping.".format(m._name))
+                continue
 
-            _, axses = plt.subplots(
-                    2, 2, 
-                    sharex=True,
-                    figsize=(24,9), 
-                    gridspec_kw={'wspace': .3, 'hspace': .05, 'height_ratios': [3,1]}
-                )
+            else:
+                _, axses = plt.subplots(
+                        2, 2, 
+                        sharex=True,
+                        figsize=(24,9), 
+                        gridspec_kw={'wspace': .3, 'hspace': .05, 'height_ratios': [3,1]}
+                    )
 
-            for m, axs, cuts in zip([model, benchmark], axses.T, cuts_list):
+                for m, axs, cuts in zip([model, benchmark], axses.T, cuts_list):
 
-                # Get true and false rates
-                pos_target_true = m._lepton_pos[np.where((m._truths == 1) & (m._predictions > cuts[0]))]
-                pos_target_false = m._lepton_pos[np.where((m._truths == 1) & (m._predictions < cuts[1]))]
-                pos_background_true = m._lepton_pos[np.where((m._truths == 0) & (m._predictions < cuts[1]))]
-                pos_background_false = m._lepton_pos[np.where((m._truths == 0) & (m._predictions > cuts[0]))]
+                    # Get true and false rates
+                    pos_target_true = m._lepton_pos[np.where((m._truths == 1) & (m._predictions > cuts[0]))]
+                    pos_target_false = m._lepton_pos[np.where((m._truths == 1) & (m._predictions < cuts[1]))]
+                    pos_background_true = m._lepton_pos[np.where((m._truths == 0) & (m._predictions < cuts[1]))]
+                    pos_background_false = m._lepton_pos[np.where((m._truths == 0) & (m._predictions > cuts[0]))]
 
-                positions_list = [[pos_target_true, pos_target_false], [pos_background_true, pos_background_false]]
-                labels_list = [[self._target_label, self._target_label+' ('+self._background_label+r'$^{ID}$)'], [self._background_label, self._background_label+' ('+self._target_label+r'$^{ID}$)']]
+                    positions_list = [[pos_target_true, pos_target_false], [pos_background_true, pos_background_false]]
+                    labels_list = [[self._target_label, self._target_label+' ('+self._background_label+r'$^{ID}$)'], [self._background_label, self._background_label+' ('+self._target_label+r'$^{ID}$)']]
 
-                # Plot            
-                for positions, labels, colors, color_comp in zip(positions_list, labels_list, np.array(self._color_dict['particles'][:4]).reshape(2,-1), self._color_dict['compare']):
+                    # Plot            
+                    for positions, labels, colors, color_comp in zip(positions_list, labels_list, np.array(self._color_dict['particles'][:4]).reshape(2,-1), self._color_dict['compare']):
 
-                    radii_true = np.sqrt( positions[0][:,0]**2 + positions[0][:,1]**2 )
-                    radii_false = np.sqrt( positions[1][:,0]**2 + positions[1][:,1]**2 )
+                        radii_true = np.sqrt( positions[0][:,0]**2 + positions[0][:,1]**2 )
+                        radii_false = np.sqrt( positions[1][:,0]**2 + positions[1][:,1]**2 )
 
-                    counts_true, bins_true = np.histogram(radii_true, bins=bins)
-                    counts_false, _ = np.histogram(radii_false, bins=bins_true)
+                        counts_true, bins_true = np.histogram(radii_true, bins=bins)
+                        counts_false, _ = np.histogram(radii_false, bins=bins_true)
 
-                    axs[0].stairs(counts_true, bins_true, color=colors[0], label=labels[0])
-                    axs[0].stairs(counts_false, bins_true, color=colors[1], label=labels[1])
+                        axs[0].stairs(counts_true, bins_true, color=colors[0], label=labels[0])
+                        axs[0].stairs(counts_false, bins_true, color=colors[1], label=labels[1])
 
-                    ratios = counts_false/counts_true
-                    bin_centers = bins_true[:-1] + (bins_true[1]-bins_true[0])/2
+                        ratios = counts_false/counts_true
+                        bin_centers = bins_true[:-1] + (bins_true[1]-bins_true[0])/2
 
-                    axs[1].plot(bin_centers, ratios, color=color_comp, marker='.', ls='dotted', label=labels[0])
+                        axs[1].plot(bin_centers, ratios, color=color_comp, marker='.', ls='dotted', label=labels[0])
 
-                axs[0].grid(linestyle='dotted')
-                axs[0].legend(fontsize=12)
+                    axs[0].grid(linestyle='dotted')
+                    axs[0].legend(fontsize=12)
 
-                axs[0].set_title('False prediction ratio - '+m._name, fontsize=16)
+                    axs[0].set_title('False prediction ratio - '+m._name, fontsize=16)
 
-                axs[1].set_ylim(0)
-                axs[1].grid(linestyle='dotted')
-                axs[1].set_xlabel('R (cm)', fontsize=12)
-                axs[1].legend(fontsize=12)
-                
-            axses[0,0].set_ylabel('Counts', fontsize=12)
-            axses[1,0].set_ylabel('Ratio', fontsize=12)
-                
-            plt.savefig(self._plot_dir + model._title + "_scores_by_distance.png")
-            plt.close()
+                    axs[1].set_ylim(0)
+                    axs[1].grid(linestyle='dotted')
+                    axs[1].set_xlabel('R (cm)', fontsize=12)
+                    axs[1].legend(fontsize=12)
+                    
+                axses[0,0].set_ylabel('Counts', fontsize=12)
+                axses[1,0].set_ylabel('Ratio', fontsize=12)
+                    
+                plt.savefig(self._plot_dir + model._title + "_scores_by_distance.png")
+                plt.close()
