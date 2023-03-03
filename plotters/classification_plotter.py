@@ -318,6 +318,10 @@ class ClassificationPlotter(Plotter):
         # Loop over models with the respective cuts
         for model, cuts in zip(models + benchmarks, thresholds):
 
+            if model._lepton_pos is None:
+                print("{}: No position found. Skipping.".format(model._name))
+                continue
+
             fig, axses = plt.subplots(
                     2, 5, 
                     figsize=(24,9), 
@@ -371,7 +375,7 @@ class ClassificationPlotter(Plotter):
         # Loop over models with the respective cuts
         for model, benchmark, cuts_list in zip(models, benchmarks, thresholds):
             if model._lepton_pos is None:
-                print("{}: No energy found. Skipping.".format(m._name))
+                print("{}: No position found. Skipping.".format(model._name))
                 continue
 
             else:
