@@ -50,16 +50,14 @@ class CLSC_cutter:
         pred_data = query_database(database, pred_query)
 
         # Get the nominal hypothesis wall distances
-        # pred_data['fqnom_dw'] = np.where(pred_data['fqe_nll']-pred_data['fqmu_nll']>0, pred_data['fqe_dw'], pred_data['fqmu_dw'])
-        # pred_data['fqnom_dwd'] = np.where(pred_data['fqe_nll']-pred_data['fqmu_nll']>0, pred_data['fqe_dwd'], pred_data['fqmu_dwd'])
-        pred_data['fqnom_dw'] = np.where(pred_data['fqmu_nll']/pred_data['fqe_nll']>1.01, pred_data['fqe_dw'], pred_data['fqmu_dw'])
-        pred_data['fqnom_dwd'] = np.where(pred_data['fqmu_nll']/pred_data['fqe_nll']>1.01, pred_data['fqe_dwd'], pred_data['fqmu_dwd'])
+        pred_data['fqnom_dw'] = np.where(pred_data['fqmu_nll']/pred_data['fqe_nll']>=1.01, pred_data['fqe_dw'], pred_data['fqmu_dw'])
+        pred_data['fqnom_dwd'] = np.where(pred_data['fqmu_nll']/pred_data['fqe_nll']>=1.01, pred_data['fqe_dwd'], pred_data['fqmu_dwd'])
 
         # Drop pred_data based on the four criteria
-        pred_data.drop(pred_data[pred_data['fq_q']<1000].index, inplace=True)
-        pred_data.drop(pred_data[pred_data['fqmu_ekin']/pred_data['fqe_ekin']>2.8].index, inplace=True)
-        pred_data.drop(pred_data[pred_data['fqnom_dw']<30].index, inplace=True)
-        pred_data.drop(pred_data[pred_data['fqnom_dwd']<250].index, inplace=True)
+        pred_data.drop(pred_data[pred_data['fq_q']<=1000].index, inplace=True)
+        pred_data.drop(pred_data[pred_data['fqmu_ekin']/pred_data['fqe_ekin']>=2.8].index, inplace=True)
+        pred_data.drop(pred_data[pred_data['fqnom_dw']<=30].index, inplace=True)
+        pred_data.drop(pred_data[pred_data['fqnom_dwd']<=250].index, inplace=True)
 
         return pred_data['event_no'].to_numpy()
 
