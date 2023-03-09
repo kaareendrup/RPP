@@ -3,7 +3,7 @@ from RPP.utils.utils import beautify_label
 
 class Model:
     
-    def __init__(self, model_name, db_name, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, target_rates=None, bg_rates=None, target_cuts=None, bg_cuts=None):
+    def __init__(self, model_name, database, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, target_rates=None, bg_rates=None, target_cuts=None, bg_cuts=None):
         self._name = model_name
         self._predictions = predictions
         self._truths = truths
@@ -20,6 +20,9 @@ class Model:
         self._benchmark_index = None
 
         self._label = beautify_label(model_name)[1:-1]
+        db_name = database.split("/")[-1][:-3]
+
+        self._db_path = database
         self._title = db_name + '_' + model_name
         self._db_name = db_name
 
@@ -32,7 +35,7 @@ class Model:
 
         background_model = Model(
             self._name,
-            self._db_name,
+            self._db_path,
             1-self._predictions, 
             1-self._truths, 
             self._event_nos, 

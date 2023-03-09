@@ -81,12 +81,9 @@ class Plotter:
         target_rates, bg_rates = target_extractor(target_rates)
         target_cuts, bg_cuts = target_extractor(target_cuts)
 
-        # Get name of database
-        db_name = db.split("/")[-1][:-3]
-
         model = Model(
             model_name,
-            db_name,
+            db, 
             preds,
             truths,
             event_nos,
