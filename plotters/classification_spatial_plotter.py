@@ -63,8 +63,8 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                 cbar.set_label('Time (?)')
 
                 ax.set_xlabel('x')
-                ax.set_xlabel('y')
-                ax.set_xlabel('z')
+                ax.set_ylabel('y')
+                ax.set_zlabel('z')
                 ax.set_title(label)
 
                 ax.xaxis.pane.fill = False
