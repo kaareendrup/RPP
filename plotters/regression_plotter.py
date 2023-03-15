@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 from RPP.plotters.plotter import Plotter
 from RPP.data.models import Model
 from RPP.utils.maths.maths import bin_residual_width, w_errorprop
-from RPP.utils.utils import make_colormap, basic_color_dict
+from RPP.utils.utils import basic_colormap, basic_color_dict
 
 
 class RegressionPlotter(Plotter):
 
-    def __init__(self, plot_dir, target, unit, color_dict=basic_color_dict, cmap=make_colormap()):
+    def __init__(self, plot_dir, target, unit, color_dict=basic_color_dict, cmap=basic_colormap):
         super().__init__(plot_dir, target, color_dict, cmap)
         
         self._unit = unit

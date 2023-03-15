@@ -19,6 +19,9 @@ def make_colormap():
 
     return newcmp
 
+basic_colormap = make_colormap()
+
+dark_colormap = 'jet'
 
 basic_color_dict = {
     'model': ['teal', 'lightseagreen',],

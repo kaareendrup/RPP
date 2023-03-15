@@ -4,12 +4,12 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve
 
 from RPP.plotters.plotter import Plotter
-from RPP.utils.utils import make_colormap, basic_color_dict, basic_style_dict, curve_config_dict, calculate_alpha, beautify_label
+from RPP.utils.utils import basic_colormap, basic_color_dict, basic_style_dict, curve_config_dict, calculate_alpha, beautify_label
 
 
 class ClassificationPlotter(Plotter):
 
-    def __init__(self, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=make_colormap(), cut_functions=None, show_cuts=True):
+    def __init__(self, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap, cut_functions=None, show_cuts=True):
         super().__init__(plot_dir, target, color_dict, style_dict, cmap, cut_functions)
 
         self._background = background

@@ -5,9 +5,73 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from RPP.plotters.classification_plotter import ClassificationPlotter
 from RPP.utils.data import query_database
-
+from RPP.utils.utils import basic_colormap, dark_colormap, basic_color_dict, basic_style_dict
 
 class ClassificationSpatialPlotter(ClassificationPlotter):
+
+    def __init__(self, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap, darkmap=dark_colormap, cut_functions=None, show_cuts=True):
+        super().__init__( plot_dir, target, background, color_dict, style_dict, cmap, cut_functions, show_cuts)
+
+        # TODO: Implement k, random_seed, pulsemap_name here
+        self._darkmap=darkmap
+
+    def get_good_bad_pools(self, model, benchmark, pulsemap_name, k, allpanels, random_seed):
+        n_panels = 4 if allpanels else 2
+
+        # Calculate model differences from truth
+        model_diffs = abs(model._truths - model._predictions)
+        benchmark_diffs = abs(benchmark._truths - benchmark._predictions)
+
+        # Categorize events
+        model_good = model._event_nos[np.where(model_diffs < k)]
+        model_bad = model._event_nos[np.where(model_diffs > 1-k)]
+        benchmark_good = benchmark._event_nos[np.where(benchmark_diffs < k)]
+        benchmark_bad = benchmark._event_nos[np.where(benchmark_diffs > 1-k)]
+
+        # Distribute events by performance of each model
+        pools = []
+        for model_selection in [model_good, model_bad]:
+            for benchmark_selection in [benchmark_bad, benchmark_good]:
+                pools.append(np.intersect1d(model_selection, benchmark_selection))
+        
+        # Setup pools and labels
+        if allpanels:
+            pools[1], pools[2] = pools[2], pools[1]
+            labels = ['G/B', 'B/G', 'G/G', 'B/B']
+        else:
+            labels = ['G/B', 'G/G']
+
+        # Loop over panels and pools to get data for a single event
+        events, features_list, truths_list = [], [], []
+        for i in range(n_panels):
+            pool = pools[i]
+            print('Number of candidate events: {}'.format(len(pool)))
+
+            # Check if the poll has events
+            if len(pool) == 0:
+                events.append(None)
+                features_list.append([])                
+                truths_list.append([])
+
+            else:
+                # Randomly select a single event
+                RNG = np.random.default_rng(seed=random_seed)
+                event = RNG.choice(pool)
+                print('Selected event: {}'.format(event))
+
+                # Get event info 
+                features_query = 'SELECT event_no, fX, fY, fZ, fTime FROM {} WHERE event_no == {}'.format(pulsemap_name,event)
+                features = query_database(model._db_path, features_query)
+
+                truths_query = 'SELECT event_no, pid, particle_sign FROM truth WHERE event_no == {}'.format(event)
+                truths = query_database(model._db_path, truths_query)
+
+                events.append(event)
+                features_list.append(features) 
+                truths_list.append(truths)
+
+        return events, features_list, truths_list, labels, model_diffs, benchmark_diffs
+    
 
     def visualise_discrepancy_plot(self, pulsemap_name, model_names=None, benchmark_names=None, k=0.1, random_seed=42, allpanels=False):
 
@@ -21,50 +85,21 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             n_panels = 4 if allpanels else 2
             fig, axs = plt.subplots(1, n_panels, figsize=(n_panels*8, 7), subplot_kw=dict(projection='3d'))
 
-            # Get a random sample from events where abs(truth - benchmark) > k, and same for model
-            model_diffs = abs(model._truths - model._predictions)
-            benchmark_diffs = abs(benchmark._truths - benchmark._predictions)
+            # Get a selection of events that fit the panels, and their event info
+            events, features_list, truths_list, labels, model_diffs, benchmark_diffs = self.get_good_bad_pools(
+                model, benchmark, pulsemap_name, k, allpanels, random_seed
+            )
 
-            model_good = model._event_nos[np.where(model_diffs < k)]
-            model_bad = model._event_nos[np.where(model_diffs > 1-k)]
-            benchmark_good = benchmark._event_nos[np.where(benchmark_diffs < k)]
-            benchmark_bad = benchmark._event_nos[np.where(benchmark_diffs > 1-k)]
+            # Loop over panels
+            for ax, event, features, truths, label in zip(axs, events, features_list, truths_list, labels):
 
-            pools = []
-            for model_selection in [model_good, model_bad]:
-                for benchmark_selection in [benchmark_bad, benchmark_good]:
-                    pools.append(np.intersect1d(model_selection, benchmark_selection))
-            
-            if allpanels:
-                pools[1], pools[2] = pools[2], pools[1]
-                labels = ['G/B', 'B/G', 'G/G', 'B/B']
-            else:
-                labels = ['G/B', 'G/G']
-
-            # Loop over panels and pools
-            for i in range(n_panels):
-                ax, pool, label = axs[i], pools[i], labels[i]
-                print('Number of candidate events: {}'.format(len(pool)))
-                if len(pool) == 0:
-                    print('No candidates, skipping.')
-                    continue
-
-                # Get event info for a single event
-                RNG = np.random.default_rng(seed=random_seed)
-                event = RNG.choice(pool)
-                print('Selected event: {}'.format(event))
-
-                features_query = 'SELECT event_no, fX, fY, fZ, fTime FROM {} WHERE event_no == {}'.format(pulsemap_name,event)
-                features = query_database(model._db_path, features_query)
-
-                truths_query = 'SELECT event_no, pid, particle_sign FROM truth WHERE event_no == {}'.format(event)
-                truths = query_database(model._db_path, truths_query)
-
+                # Create label
                 label = r'$\nu_e$' if abs(truths['pid'].to_numpy()[0]) == 12 else r'$\nu_\mu$'
                 if truths['particle_sign'].to_numpy()[0] == -1:
                     label = r'$\overline{'+label[1:-1]+r'}$'
                 label = label + '  #' + str(event)
 
+                # Plot
                 pnt3d=ax.scatter(features['fX'], features['fY'], features['fZ'], c=features['fTime'], marker='.', s=1.5, label=label)
                 cbar=fig.colorbar(pnt3d, ax=ax, shrink=0.7, aspect=20)
                 cbar.set_label('Time (?)')
@@ -85,4 +120,69 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
 
             plt.tight_layout()
             plt.savefig(self._plot_dir + model._title + '_single_events_3D.png')
+            plt.close()
+
+
+    def plot_event_displays(self, pulsemap_name, model_names=None, benchmark_names=None, k=0.1, random_seed=42, allpanels=False, auto_rotate=False, force_rotate=None):
+
+        # Add the correct models and benchmarks if not supplied
+        models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
+
+        # Loop over models
+        for model, benchmark in zip(models, benchmarks):
+
+            # Initialize figure
+            n_panels = 4 if allpanels else 2
+            fig = plt.figure(figsize=(n_panels*8, 7))
+
+            # Get a selection of events that fit the panels, and their event info
+            events, features_list, truths_list, labels, model_diffs, benchmark_diffs = self.get_good_bad_pools(
+                model, benchmark, pulsemap_name, k, allpanels, random_seed
+            )
+
+            # Loop over panels
+            for i, (event, features, truths, label, model_diff, benchmark_diff) in enumerate(zip(events, features_list, truths_list, labels, model_diffs, benchmark_diffs)):
+
+                # Create label
+                label = r'$\nu_e$' if abs(truths['pid'].to_numpy()[0]) == 12 else r'$\nu_\mu$'
+                if truths['particle_sign'].to_numpy()[0] == -1:
+                    label = r'$\overline{'+label[1:-1]+r'}$'
+                label = label + '  #' + str(event)
+
+                # Create subplots
+                ax_top = plt.subplot(3, n_panels, (0*n_panels+i+1), projection='polar')
+                ax_sides = plt.subplot(3, n_panels, (1*n_panels+i+1))
+                ax_bottom = plt.subplot(3, n_panels, (2*n_panels+i+1), projection='polar')
+
+                # Convert to polar
+                features['r'] = np.sqrt(features['fX']**2 + features['fY']**2)
+                features['phi'] = np.arctan2(features['fX'], features['fY'])
+
+                # Extract sides of barrel
+                feats_top = features[features['fZ'] == 549.784241]
+                feats_sides = features[abs(features['fZ']) < 549.784241]
+                feats_bottom = features[features['fZ'] == -549.784241]
+
+                # Plot
+                ax_top.scatter(feats_top['phi'], feats_top['r'], c=feats_top['fTime'], marker='.', s=1.5, cmap=self._darkmap, label=label)
+                ax_sides.scatter(feats_sides['phi'], feats_sides['fZ'], c=feats_sides['fTime'], marker='.', cmap=self._darkmap, s=1.5)
+                ax_bottom.scatter(feats_bottom['phi'], feats_bottom['r'], c=feats_bottom['fTime'], marker='.', cmap=self._darkmap, s=1.5)
+
+                ax_top.set_theta_zero_location('S')
+                ax_bottom.set_theta_zero_location('N')
+                ax_bottom.set_theta_direction('clockwise')
+                ax_sides.set_xlim(-np.pi,np.pi)
+                ax_sides.set_ylim(-549.784241,549.784241)
+
+                for ax in (ax_top, ax_bottom, ax_sides):
+                    for spine in ax.spines.values():
+                        spine.set_visible(False)
+                    ax.tick_params(bottom=False, labelbottom=False, left=False, labelleft=False)
+                    ax.set_facecolor('k')
+
+                ax_top.set_title(model._name+': {:.3f}, '.format(model_diff) + benchmark._name+': {:.3f}'.format(benchmark_diff))
+                ax_top.legend(loc='upper left', bbox_to_anchor=(1.08, 1.02))
+
+            plt.subplots_adjust(hspace=0)
+            plt.savefig(self._plot_dir + model._title + '_single_events_displays.png')
             plt.close()
