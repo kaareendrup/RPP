@@ -1,12 +1,12 @@
 
 import numpy as np
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from matplotlib import cm
 import pathlib
 from sklearn.metrics import roc_curve, roc_auc_score, precision_recall_curve, average_precision_score
 
 
-def make_colormap():
+def make_default_colormap():
 
     viridis = cm.get_cmap('viridis', 256)
     newcolors = viridis(np.linspace(0, 1, 256))
@@ -19,9 +19,15 @@ def make_colormap():
 
     return newcmp
 
-basic_colormap = make_colormap()
+def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
+    new_cmap = LinearSegmentedColormap.from_list(
+        'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
+        cmap(np.linspace(minval, maxval, n)))
+    return new_cmap
 
-dark_colormap = 'jet'
+basic_colormap = make_default_colormap()
+dark_colormap = truncate_colormap(cm.get_cmap('gist_rainbow_r'), 0.35, 0.95)
+# dark_colormap = truncate_colormap(cm.get_cmap('viridis_r'), 0.05, 0.95)
 
 basic_color_dict = {
     'model': ['teal', 'lightseagreen',],

@@ -15,7 +15,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
         # TODO: Implement k, random_seed, pulsemap_name here
         self._darkmap=darkmap
 
-    def get_good_bad_pools(self, model, benchmark, pulsemap_name, k, allpanels, random_seed):
+    def get_good_bad_pools(self, model, benchmark, pulsemap_name, colorby, k, allpanels, random_seed):
         n_panels = 4 if allpanels else 2
 
         # Calculate model differences from truth
@@ -60,7 +60,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                 print('Selected event: {}'.format(event))
 
                 # Get event info 
-                features_query = 'SELECT event_no, fX, fY, fZ, fTime FROM {} WHERE event_no == {}'.format(pulsemap_name,event)
+                features_query = 'SELECT event_no, fX, fY, fZ, {} FROM {} WHERE event_no == {}'.format(colorby, pulsemap_name,event)
                 features = query_database(model._db_path, features_query)
 
                 truths_query = 'SELECT event_no, pid, particle_sign FROM truth WHERE event_no == {}'.format(event)
@@ -70,10 +70,13 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                 features_list.append(features) 
                 truths_list.append(truths)
 
-        return events, features_list, truths_list, labels, model_diffs, benchmark_diffs
+        vmin = min([min(features[colorby]) for features in features_list])
+        vmax = max([max(features[colorby]) for features in features_list])
+
+        return events, features_list, truths_list, labels, model_diffs, benchmark_diffs, vmin, vmax
     
 
-    def visualise_discrepancy_plot(self, pulsemap_name, model_names=None, benchmark_names=None, k=0.1, random_seed=42, allpanels=False):
+    def visualise_discrepancy_plot(self, pulsemap_name, model_names=None, benchmark_names=None, colorby='fTime', k=0.1, random_seed=42, allpanels=False):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
@@ -86,8 +89,8 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             fig, axs = plt.subplots(1, n_panels, figsize=(n_panels*8, 7), subplot_kw=dict(projection='3d'))
 
             # Get a selection of events that fit the panels, and their event info
-            events, features_list, truths_list, labels, model_diffs, benchmark_diffs = self.get_good_bad_pools(
-                model, benchmark, pulsemap_name, k, allpanels, random_seed
+            events, features_list, truths_list, labels, model_diffs, benchmark_diffs, vmin, vmax = self.get_good_bad_pools(
+                model, benchmark, pulsemap_name, colorby, k, allpanels, random_seed
             )
 
             # Loop over panels
@@ -100,9 +103,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                 label = label + '  #' + str(event)
 
                 # Plot
-                pnt3d=ax.scatter(features['fX'], features['fY'], features['fZ'], c=features['fTime'], marker='.', s=1.5, label=label)
-                cbar=fig.colorbar(pnt3d, ax=ax, shrink=0.7, aspect=20)
-                cbar.set_label('Time (?)')
+                pnt3d=ax.scatter(features['fX'], features['fY'], features['fZ'], c=features[colorby], vmin=vmin, vmax=vmax, marker='.', s=1.5, label=label)
 
                 ax.set_xlabel('x')
                 ax.set_ylabel('y')
@@ -118,12 +119,16 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                 ax.yaxis.pane.fill = False
                 ax.zaxis.pane.fill = False
 
+            # Make colorbar
+            cbar=fig.colorbar(pnt3d, ax=ax, shrink=0.7, aspect=20)
+            cbar.set_label('Time (?)')
+
             plt.tight_layout()
-            plt.savefig(self._plot_dir + model._title + '_single_events_3D.png')
+            plt.savefig(self._plot_dir + model._title + '_single_events_3D_{}.png'.format(colorby))
             plt.close()
 
 
-    def plot_event_displays(self, pulsemap_name, model_names=None, benchmark_names=None, k=0.1, random_seed=42, allpanels=False, auto_rotate=False, force_rotate=None):
+    def plot_event_displays(self, pulsemap_name, model_names=None, benchmark_names=None, colorby='fTime', k=0.1, random_seed=42, allpanels=False, auto_rotate=False, force_rotate=None):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
@@ -136,12 +141,12 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             fig = plt.figure(figsize=(n_panels*8, 7))
 
             # Get a selection of events that fit the panels, and their event info
-            events, features_list, truths_list, labels, model_diffs, benchmark_diffs = self.get_good_bad_pools(
-                model, benchmark, pulsemap_name, k, allpanels, random_seed
+            events, features_list, truths_list, labels, model_diffs, benchmark_diffs, vmin, vmax = self.get_good_bad_pools(
+                model, benchmark, pulsemap_name, colorby, k, allpanels, random_seed
             )
 
             # Loop over panels
-            for i, (event, features, truths, label, model_diff, benchmark_diff) in enumerate(zip(events, features_list, truths_list, labels, model_diffs, benchmark_diffs)):
+            for i, (event, features, truths, label) in enumerate(zip(events, features_list, truths_list, labels)):
 
                 # Create label
                 label = r'$\nu_e$' if abs(truths['pid'].to_numpy()[0]) == 12 else r'$\nu_\mu$'
@@ -160,13 +165,13 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
 
                 # Extract sides of barrel
                 feats_top = features[features['fZ'] == 549.784241]
-                feats_sides = features[abs(features['fZ']) < 549.784241]
                 feats_bottom = features[features['fZ'] == -549.784241]
+                feats_sides = features[abs(features['fZ']) < 549.784241]
 
                 # Plot
-                ax_top.scatter(feats_top['phi'], feats_top['r'], c=feats_top['fTime'], marker='.', s=1.5, cmap=self._darkmap, label=label)
-                ax_sides.scatter(feats_sides['phi'], feats_sides['fZ'], c=feats_sides['fTime'], marker='.', cmap=self._darkmap, s=1.5)
-                ax_bottom.scatter(feats_bottom['phi'], feats_bottom['r'], c=feats_bottom['fTime'], marker='.', cmap=self._darkmap, s=1.5)
+                ax_top.scatter(feats_top['phi'], feats_top['r'], c=feats_top[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax, label=label)
+                ax_bottom.scatter(feats_bottom['phi'], feats_bottom['r'], c=feats_bottom[colorby], marker='.', cmap=self._darkmap, vmin=vmin, vmax=vmax, s=1.5)
+                c_data = ax_sides.scatter(feats_sides['phi'], feats_sides['fZ'], c=feats_sides[colorby], marker='.', cmap=self._darkmap, vmin=vmin, vmax=vmax, s=1.5)
 
                 ax_top.set_theta_zero_location('S')
                 ax_bottom.set_theta_zero_location('N')
@@ -174,15 +179,23 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                 ax_sides.set_xlim(-np.pi,np.pi)
                 ax_sides.set_ylim(-549.784241,549.784241)
 
+                # Remove axes and set black BG
                 for ax in (ax_top, ax_bottom, ax_sides):
-                    for spine in ax.spines.values():
-                        spine.set_visible(False)
-                    ax.tick_params(bottom=False, labelbottom=False, left=False, labelleft=False)
                     ax.set_facecolor('k')
+                    ax.set_axis_off()
+                    ax.add_artist(ax.patch)
+                    ax.patch.set_zorder(-1)
+
+                model_diff = model_diffs[np.where(model._event_nos == event)][0]
+                benchmark_diff = benchmark_diffs[np.where(benchmark._event_nos == event)][0]
 
                 ax_top.set_title(model._name+': {:.3f}, '.format(model_diff) + benchmark._name+': {:.3f}'.format(benchmark_diff))
                 ax_top.legend(loc='upper left', bbox_to_anchor=(1.08, 1.02))
 
+            # Make colorbar
+            cbar=fig.colorbar(c_data, ax=ax_sides, shrink=0.9, aspect=20)
+            cbar.set_label(colorby)
+
             plt.subplots_adjust(hspace=0)
-            plt.savefig(self._plot_dir + model._title + '_single_events_displays.png')
+            plt.savefig(self._plot_dir + model._title + '_single_events_displays_{}.png'.format(colorby))
             plt.close()

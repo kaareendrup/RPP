@@ -62,3 +62,28 @@ class CLSC_cutter:
         return pred_data['event_no'].to_numpy()
 
 CLSC_cut = CLSC_cutter()
+
+
+class pion_cutter:
+
+    def __init__(self, has_pions=False):
+        if has_pions:
+            self._name = 'no_pions'
+        else:
+            self._name = 'has_pions'
+        self._has_pions = has_pions
+
+    def cut(self, event_nos, database):
+
+        type_query = 'SELECT event_no, fNpions FROM truth WHERE event_no IN {}'.format(tuple(event_nos))
+        type_data = query_database(database, type_query)
+        
+        if self._has_pions:
+            type_data.drop(type_data[type_data['fNpions'] == 0].index, inplace=True)
+        else:
+            type_data.drop(type_data[type_data['fNpions'] != 0].index, inplace=True)
+        
+        return type_data['event_no']
+    
+has_pions_cut = pion_cutter(has_pions=True)
+no_pions_cut = pion_cutter(has_pions=False)
