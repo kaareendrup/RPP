@@ -18,4 +18,4 @@ FlavourPlotter.plot_score_hist()
 FlavourPlotter.plot_performance_curve()
 ```
 
-The currect data structure is based on the approach of the [GraphNeT](https://github.com/graphnet-team) framework with results as .csv-files and metadata as sqlite-databases.
+The current data structure is based on the approach of the [GraphNeT](https://github.com/graphnet-team) framework with model predictions as .csv-files and metadata as sqlite-databases.
