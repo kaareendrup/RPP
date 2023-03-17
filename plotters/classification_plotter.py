@@ -134,7 +134,6 @@ class ClassificationPlotter(Plotter):
 
             # Decorate plot
             axs[0].legend(fontsize=12, loc=(0.085, 0.85))
-            #axs[0].legend(fontsize=12)
             self.add_rate_info(axs, model)
 
             plt.savefig(self._plot_dir + model._title + "_clfhist.png")
