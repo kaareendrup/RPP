@@ -9,15 +9,15 @@ from RPP.utils.utils import basic_colormap, basic_color_dict, basic_style_dict, 
 
 class ClassificationPlotter(Plotter):
 
-    def __init__(self, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap, cut_functions=None, show_cuts=True):
-        super().__init__(plot_dir, target, color_dict, style_dict, cmap, cut_functions)
+    def __init__(self, name, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap, show_cuts=True):
+        super().__init__(name, plot_dir, target, color_dict, style_dict, cmap)
 
         self._background = background
         self._background_label = beautify_label(background)
         self._show_cuts = show_cuts
 
 
-    def apply_rates_to_plot(self, axs, cut, xs, ys, is_bg, horizontal, annotate):
+    def apply_rates_to_plot(self, axs, model, cut, xs, ys, is_bg, horizontal, annotate):
 
         # Get position
         pos_dict = {False: {False: [0.66, 0.82], True: [0.1, 0.82]}, True: {False: [0.73, 0.87], True: [0.73, 0.37]}}
@@ -37,7 +37,7 @@ class ClassificationPlotter(Plotter):
         if annotate:
             # Add text to plot
             text = []
-            for x, y, title in zip(xs, ys, [r'Cut$_{%s} = %.3f$' % (label, cut), (self._cut_functions[-1]._name)]):
+            for x, y, title in zip(xs, ys, [r'Cut$_{%s} = %.3f$' % (label, cut), (model._cut_functions[-1]._name)]):
                 text.append(title)
                 text.append(r'TPR$_{%s} = %.2f$' % (label, y*100) + '%')
                 text.append(r'FPR$_{%s} = %.2f$' % (label, x*100) + '%')
@@ -69,7 +69,7 @@ class ClassificationPlotter(Plotter):
                     else:
                         fprs, tprs = [ifpr], [itpr]
 
-                    self.apply_rates_to_plot(axs, ithreshold, fprs, tprs, is_bg, horizontal, annotate)
+                    self.apply_rates_to_plot(axs, model, ithreshold, fprs, tprs, is_bg, horizontal, annotate)
 
                 if model._target_cuts is not None:
                     cut = model._target_cuts[-1]
@@ -85,7 +85,7 @@ class ClassificationPlotter(Plotter):
                             tprs.append(np.count_nonzero(ones>cut)/np.count_nonzero(truths == 1))
                             fprs.append(np.count_nonzero(zeros>cut)/np.count_nonzero(truths == 0))
 
-                    self.apply_rates_to_plot(axs, cut, fprs, tprs, is_bg, horizontal, annotate)
+                    self.apply_rates_to_plot(axs, model, cut, fprs, tprs, is_bg, horizontal, annotate)
 
 
     def plot_score_hist(self, model_names=None, benchmark_names=None, n_bins=100, shift_x=False):
@@ -94,14 +94,15 @@ class ClassificationPlotter(Plotter):
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
 
         for model_list in [models, benchmarks]:
-            for model in model_list:
+                
+            # Plot 2D histogram and scatter plot of the same range
+            _, axs = plt.subplots(
+                1, 2, 
+                figsize=(18,7), 
+                gridspec_kw={'wspace': .3, 'width_ratios': [1,1]}
+            )
 
-                # Plot 2D histogram and scatter plot of the same range
-                _, axs = plt.subplots(
-                    1, 2, 
-                    figsize=(18,7), 
-                    gridspec_kw={'wspace': .3, 'width_ratios': [1,1]}
-                )
+            for model, ls in zip(model_list, self._style_dict['histogram']):
 
                 # Subdivide in truth and background
                 ones = model._predictions[np.where(model._truths == 1)]
@@ -120,8 +121,8 @@ class ClassificationPlotter(Plotter):
                     else:
                         bins = n_bins
 
-                    ax.hist(ones, color=model._color, bins=bins, histtype='step', label=self._target_label +r' '+ model._label, zorder=1)
-                    ax.hist(zeros, color='k', bins=bins, histtype='step', label=self._background_label +r' '+ model._label, zorder=0)
+                    ax.hist(ones, color=model._color, bins=bins, histtype='step', linestyle=ls, label=self._target_label +r' '+ model._label, zorder=1)
+                    ax.hist(zeros, color='k', bins=bins, histtype='step', linestyle=ls, label=self._background_label +r' '+ model._label, zorder=0)
 
                     # Decorate subplot
                     ax.set_xlabel('Model score', fontsize=12)
@@ -131,12 +132,13 @@ class ClassificationPlotter(Plotter):
                     if log:
                         ax.set_yscale('log')
 
-                # Decorate plot
-                axs[0].legend(fontsize=12, loc=(0.085, 0.85))
-                self.add_rate_info(axs, model)
+            # Decorate plot
+            axs[0].legend(fontsize=12, loc=(0.085, 0.85))
+            #axs[0].legend(fontsize=12)
+            self.add_rate_info(axs, model)
 
-                plt.savefig(self._plot_dir + model._title + "_clfhist.png")
-                plt.close()
+            plt.savefig(self._plot_dir + model._title + "_clfhist.png")
+            plt.close()
 
 
     def plot_performance_curve(self, curve_type='ROC', model_names=None, benchmark_names=None, log_x=False, get_background=False):
@@ -244,7 +246,7 @@ class ClassificationPlotter(Plotter):
                     for lh in leg.legendHandles: 
                         lh.set_alpha(1)
 
-            plt.savefig(self._plot_dir + models[0]._title + "_energy_score.png")
+            plt.savefig(self._plot_dir + model._title + "_energy_score.png")
             plt.close()
 
 
@@ -305,7 +307,7 @@ class ClassificationPlotter(Plotter):
                     ax.set_xlim(b_mean-dist*1.1, b_mean+dist*1.1)
                     ax.set_ylim(m_mean-dist*1.1, m_mean+dist*1.1)
 
-            plt.savefig(self._plot_dir + models[0]._title + "_model_scores.png")
+            plt.savefig(self._plot_dir + model._title + "_model_scores.png")
             plt.close()
 
 

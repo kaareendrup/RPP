@@ -19,15 +19,18 @@ def make_default_colormap():
 
     return newcmp
 
+
 def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
     new_cmap = LinearSegmentedColormap.from_list(
         'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
         cmap(np.linspace(minval, maxval, n)))
     return new_cmap
 
+
 basic_colormap = make_default_colormap()
 dark_colormap = truncate_colormap(cm.get_cmap('gist_rainbow_r'), 0.35, 0.95)
 # dark_colormap = truncate_colormap(cm.get_cmap('viridis_r'), 0.05, 0.95)
+
 
 basic_color_dict = {
     'model': ['teal', 'lightseagreen',],
@@ -41,16 +44,13 @@ basic_style_dict = {
     'model': {'linestyle': 'solid'},
     'compare': {'linestyle': 'solid'},
     'annotate': {'linestyle': 'dotted', 'lw': 2.5}, # 2
+    'histogram': ['solid', 'dashed', 'dotted',]
 }
 
-def make_plot_dir(target, dir, cut_functions):
 
-    cut_string = ""
-    if cut_functions is not None:
-        for function in cut_functions:
-            cut_string += "_" + function._name
+def make_plot_dir(name, target, dir):
 
-    plot_dir = dir + '/plots/' + target + cut_string + '/'
+    plot_dir = dir + '/plots/' + target + '_' + name + '/'
 
     path = pathlib.Path(plot_dir)
     path.mkdir(parents=True, exist_ok=True)

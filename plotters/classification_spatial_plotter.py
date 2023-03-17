@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import random
 
 from RPP.plotters.classification_plotter import ClassificationPlotter
 from RPP.utils.data import query_database
@@ -9,8 +10,10 @@ from RPP.utils.utils import basic_colormap, dark_colormap, basic_color_dict, bas
 
 class ClassificationSpatialPlotter(ClassificationPlotter):
 
-    def __init__(self, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap, darkmap=dark_colormap, cut_functions=None, show_cuts=True):
-        super().__init__( plot_dir, target, background, color_dict, style_dict, cmap, cut_functions, show_cuts)
+    # def __init__(self, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap, darkmap=dark_colormap, cut_functions=None, show_cuts=True):
+    #     super().__init__( plot_dir, target, background, color_dict, style_dict, cmap, cut_functions, show_cuts)
+    def __init__(self, name, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap, darkmap=dark_colormap, show_cuts=True):
+        super().__init__(name, plot_dir, target, background, color_dict, style_dict, cmap, show_cuts)
 
         # TODO: Implement k, random_seed, pulsemap_name here
         self._darkmap=darkmap
@@ -36,8 +39,8 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
         
         # Setup pools and labels
         if allpanels:
-            pools[1], pools[2] = pools[2], pools[1]
-            labels = ['G/B', 'B/G', 'G/G', 'B/B']
+            pools[1], pools[3] = pools[3], pools[1]
+            labels = ['G/B', 'B/G', 'B/B', 'G/G']
         else:
             labels = ['G/B', 'G/G']
 
@@ -120,10 +123,12 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                 ax.zaxis.pane.fill = False
 
             # Make colorbar
-            cbar=fig.colorbar(pnt3d, ax=ax, shrink=0.7, aspect=20)
-            cbar.set_label('Time (?)')
+            fig.subplots_adjust(right=0.9)
+            cbar_ax = fig.add_axes([0.92, 0.1, 0.007, 0.8])
+            cbar=fig.colorbar(pnt3d, cax=cbar_ax)
+            cbar.set_label(colorby)
 
-            plt.tight_layout()
+            #plt.tight_layout()
             plt.savefig(self._plot_dir + model._title + '_single_events_3D_{}.png'.format(colorby))
             plt.close()
 
@@ -193,9 +198,80 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                 ax_top.legend(loc='upper left', bbox_to_anchor=(1.08, 1.02))
 
             # Make colorbar
-            cbar=fig.colorbar(c_data, ax=ax_sides, shrink=0.9, aspect=20)
+            fig.subplots_adjust(right=0.9)
+            cbar_ax = fig.add_axes([0.92, 0.1, 0.007, 0.8])
+            cbar=fig.colorbar(c_data, cax=cbar_ax)
             cbar.set_label(colorby)
 
             plt.subplots_adjust(hspace=0)
             plt.savefig(self._plot_dir + model._title + '_single_events_displays_{}.png'.format(colorby))
+            plt.close()
+
+
+    def plot_several_event_displays(self, pulsemap_name, model_names=None, benchmark_names=None, rows=3, columns=5, colorby='fTime', k=0.1, random_seed=42):
+
+        # Add the correct models and benchmarks if not supplied
+        models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
+
+        if colorby == 'fTime':
+            vmin, vmax = 1100, 1400
+        else:
+            vmin, vmax = 0, 50
+
+        # Loop over models
+        for model, benchmark in zip(models, benchmarks):
+
+            fig = plt.figure(figsize=(columns*8, rows*7))
+
+            RNG = np.random.default_rng(seed=random_seed)
+            seeds = RNG.choice(1000, (rows, columns))
+
+            for m in range(rows):
+                for n in range(columns):
+
+                    _, features_list, _, _, _, _, _, _ = self.get_good_bad_pools(
+                        model, benchmark, pulsemap_name, colorby, k, False, seeds[m,n]
+                    )
+                    features = features_list[0]
+
+                    # Create subplots
+                    ax_top = plt.subplot(3*rows, columns, (m*3*columns+n+0*columns+1), projection='polar')
+                    ax_sides = plt.subplot(3*rows, columns, (m*3*columns+n+1*columns+1))
+                    ax_bottom = plt.subplot(3*rows, columns, (m*3*columns+n+2*columns+1), projection='polar')
+
+                    # Convert to polar
+                    features['r'] = np.sqrt(features['fX']**2 + features['fY']**2)
+                    features['phi'] = np.arctan2(features['fX'], features['fY'])
+
+                    # Extract sides of barrel
+                    feats_top = features[features['fZ'] == 549.784241]
+                    feats_bottom = features[features['fZ'] == -549.784241]
+                    feats_sides = features[abs(features['fZ']) < 549.784241]
+
+                    # Plot
+                    ax_top.scatter(feats_top['phi'], feats_top['r'], c=feats_top[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax)
+                    ax_bottom.scatter(feats_bottom['phi'], feats_bottom['r'], c=feats_bottom[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax)
+                    c_data = ax_sides.scatter(feats_sides['phi'], feats_sides['fZ'], c=feats_sides[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax)
+
+                    ax_top.set_theta_zero_location('S')
+                    ax_bottom.set_theta_zero_location('N')
+                    ax_bottom.set_theta_direction('clockwise')
+                    ax_sides.set_xlim(-np.pi,np.pi)
+                    ax_sides.set_ylim(-549.784241,549.784241)
+
+                    # Remove axes and set black BG
+                    for ax in (ax_top, ax_bottom, ax_sides):
+                        ax.set_facecolor('k')
+                        ax.set_axis_off()
+                        ax.add_artist(ax.patch)
+                        ax.patch.set_zorder(-1)
+
+            # Make colorbar
+            fig.subplots_adjust(right=0.9)
+            cbar_ax = fig.add_axes([0.92, 0.1, 0.007, 0.8])
+            cbar=fig.colorbar(c_data, cax=cbar_ax)
+            cbar.set_label(colorby)
+
+            plt.subplots_adjust(hspace=0)
+            plt.savefig(self._plot_dir + model._title + '_multiple_events_displays_{}.png'.format(colorby))
             plt.close()

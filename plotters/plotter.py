@@ -8,15 +8,15 @@ from RPP.data.models import Model
 
 class Plotter:
 
-    def __init__(self, plot_dir, target, color_dict, style_dict, cmap, cut_functions=None):
+    #def __init__(self, plot_dir, target, color_dict, style_dict, cmap, cut_functions=None):
+    def __init__(self, name, plot_dir, target, color_dict, style_dict, cmap):
 
         # Member variables # TODO: Create common string that is prepended to plot names
-        self._plot_dir = make_plot_dir(target, plot_dir, cut_functions)
+        self._plot_dir = make_plot_dir(name, target, plot_dir)
         self._target = target
         self._cmap = cmap
         self._color_dict = color_dict
         self._style_dict = style_dict
-        self._cut_functions = cut_functions
 
         self._target_label = beautify_label(target)
 
@@ -24,7 +24,7 @@ class Plotter:
         self._benchmarks_list = []
 
 
-    def load_csv(self, file, database=None, reverse=False):
+    def load_csv(self, file, database=None, reverse=False, cut_functions=None):
         
         data = pd.read_csv(file)
         data.sort_values('event_no', inplace=True, ignore_index=True)
@@ -34,9 +34,9 @@ class Plotter:
         original_truths = data[target].to_numpy()
 
         # Apply the relevant cuts
-        if self._cut_functions is not None:
+        if cut_functions is not None:
             if database is not None:
-                for function in self._cut_functions:
+                for function in cut_functions:
                     event_nos = function.cut(event_nos, database)
 
                     # Replace original truths if the first cut is cc/nc
@@ -71,11 +71,7 @@ class Plotter:
         return preds, truths, event_nos, energy, original_truths, lepton_pos
 
 
-    def make_model(self, model_name, db, preds, truths, event_nos, original_truths, energy, lepton_pos, color, model_type, target_rates, target_cuts):
-
-        # Get color from dict if it is not defined
-        if color is None:
-            color=self._color_dict[model_type][len(self._models_list)]
+    def make_model(self, model_name, db, preds, truths, event_nos, original_truths, energy, lepton_pos, color, target_rates, target_cuts, cut_functions):
 
         # Get target rates based on what is specified
         target_rates, bg_rates = target_extractor(target_rates)
@@ -94,15 +90,20 @@ class Plotter:
             target_rates,
             bg_rates,
             target_cuts,
-            bg_cuts
+            bg_cuts,
+            cut_functions,
         )
         return model
 
 
-    def add_results(self, results_file, model_name, database_file=None, color=None, target_rates=None, target_cuts=None, reverse=False):
+    def add_results(self, results_file, model_name, database_file=None, color=None, target_rates=None, target_cuts=None, reverse=False, cut_functions=None):
+
+        # Get color from dict if it is not defined
+        if color is None:
+            color=self._color_dict['model'][len(self._models_list)]
 
         # Load data from csv
-        preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(results_file, database_file, reverse)
+        preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(results_file, database_file, reverse, cut_functions)
         if reverse:
             preds, truths, original_truths = 1-preds, 1-truths, 1-original_truths
 
@@ -117,25 +118,27 @@ class Plotter:
             energy,
             lepton_pos,
             color,
-            'model',
             target_rates,
             target_cuts,
+            cut_functions,
         )
 
         self._models_list.append(model)
 
 
-    def add_benchmark(self, benchmark_file, model_name, pred_scheme=pred_pure, link_models=None, color=None, database_file=None, target_rates=None, target_cuts=None):
+    # def add_benchmark(self, benchmark_file, model_name, pred_scheme=pred_pure, link_models=None, color=None, database_file=None, target_rates=None, target_cuts=None):
+    def add_benchmark(self, benchmark_file, model_name, pred_scheme=pred_pure, link_models=None, color=None, database_file=None, target_rates=None, target_cuts=None, cut_functions=None):
         
         # Get color from dict if it is not defined
         if color is None:
-            color=self._color_dict['benchmark'][len(self._models_list)]
+            color=self._color_dict['benchmark'][len(self._benchmarks_list)]
 
         # Define model parameters and append to list
         if benchmark_file[-4:] == '.csv':
 
             # Load data
-            preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(benchmark_file, database_file)
+            # preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(benchmark_file, database_file)
+            preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(benchmark_file, database_file, cut_functions)
 
         elif benchmark_file[-3:] == '.db':
 
@@ -150,12 +153,14 @@ class Plotter:
             energy = truth_model._energy
             original_truths = truth_model._original_truths
             lepton_pos = truth_model._lepton_pos
+            cut_functions = truth_model._cut_functions
 
             # # Get correct target for sqlite query
-            pred_target = fiTQun_dict[self._target] if model_name == 'fiTQun' else self._target
+            model_map_name = model_name.split("_")[0]
+            pred_target = fiTQun_dict[self._target] if model_map_name == 'fiTQun' else self._target
 
             # # Get predictions from sqlite database
-            preds = pred_scheme(benchmark_file, pred_target, model_name, event_nos)
+            preds = pred_scheme(benchmark_file, pred_target, model_map_name, event_nos)
             database_file = benchmark_file
 
         else:
@@ -172,9 +177,9 @@ class Plotter:
             energy,
             lepton_pos, 
             color,
-            'benchmark',
             target_rates,
             target_cuts,
+            cut_functions,
         )
 
         self._benchmarks_list.append(model)
