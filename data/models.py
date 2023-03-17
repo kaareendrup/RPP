@@ -26,6 +26,7 @@ class Model:
         self._db_path = database
         self._title = db_name + '_' + model_name
         self._db_name = db_name
+        self._pulsemap_name = db_name.split("_")[0]
 
 
     def add_benchmark(self, index):

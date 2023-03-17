@@ -2,7 +2,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import random
 
 from RPP.plotters.classification_plotter import ClassificationPlotter
 from RPP.utils.data import query_database
@@ -10,15 +9,18 @@ from RPP.utils.utils import basic_colormap, dark_colormap, basic_color_dict, bas
 
 class ClassificationSpatialPlotter(ClassificationPlotter):
 
-    # def __init__(self, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap, darkmap=dark_colormap, cut_functions=None, show_cuts=True):
-    #     super().__init__( plot_dir, target, background, color_dict, style_dict, cmap, cut_functions, show_cuts)
-    def __init__(self, name, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap, darkmap=dark_colormap, show_cuts=True):
+    def __init__(self, name, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap, darkmap=dark_colormap, show_cuts=True, k=0.1, random_seed=42):
         super().__init__(name, plot_dir, target, background, color_dict, style_dict, cmap, show_cuts)
 
-        # TODO: Implement k, random_seed, pulsemap_name here
         self._darkmap=darkmap
+        self._k = k
+        self._random_seed = random_seed
 
-    def get_good_bad_pools(self, model, benchmark, pulsemap_name, colorby, k, allpanels, random_seed):
+
+    def get_good_bad_pools(self, model, benchmark, colorby, allpanels, random_seed=None):
+        if random_seed is None:
+            random_seed = self._random_seed
+
         n_panels = 4 if allpanels else 2
 
         # Calculate model differences from truth
@@ -26,10 +28,10 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
         benchmark_diffs = abs(benchmark._truths - benchmark._predictions)
 
         # Categorize events
-        model_good = model._event_nos[np.where(model_diffs < k)]
-        model_bad = model._event_nos[np.where(model_diffs > 1-k)]
-        benchmark_good = benchmark._event_nos[np.where(benchmark_diffs < k)]
-        benchmark_bad = benchmark._event_nos[np.where(benchmark_diffs > 1-k)]
+        model_good = model._event_nos[np.where(model_diffs < self._k)]
+        model_bad = model._event_nos[np.where(model_diffs > 1-self._k)]
+        benchmark_good = benchmark._event_nos[np.where(benchmark_diffs < self._k)]
+        benchmark_bad = benchmark._event_nos[np.where(benchmark_diffs > 1-self._k)]
 
         # Distribute events by performance of each model
         pools = []
@@ -63,7 +65,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                 print('Selected event: {}'.format(event))
 
                 # Get event info 
-                features_query = 'SELECT event_no, fX, fY, fZ, {} FROM {} WHERE event_no == {}'.format(colorby, pulsemap_name,event)
+                features_query = 'SELECT event_no, fX, fY, fZ, {} FROM {} WHERE event_no == {}'.format(colorby, model._pulsemap_name, event)
                 features = query_database(model._db_path, features_query)
 
                 truths_query = 'SELECT event_no, pid, particle_sign FROM truth WHERE event_no == {}'.format(event)
@@ -79,7 +81,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
         return events, features_list, truths_list, labels, model_diffs, benchmark_diffs, vmin, vmax
     
 
-    def visualise_discrepancy_plot(self, pulsemap_name, model_names=None, benchmark_names=None, colorby='fTime', k=0.1, random_seed=42, allpanels=False):
+    def visualise_discrepancy_plot(self, model_names=None, benchmark_names=None, colorby='fTime', allpanels=False):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
@@ -93,7 +95,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
 
             # Get a selection of events that fit the panels, and their event info
             events, features_list, truths_list, labels, model_diffs, benchmark_diffs, vmin, vmax = self.get_good_bad_pools(
-                model, benchmark, pulsemap_name, colorby, k, allpanels, random_seed
+                model, benchmark, colorby, allpanels
             )
 
             # Loop over panels
@@ -128,12 +130,11 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             cbar=fig.colorbar(pnt3d, cax=cbar_ax)
             cbar.set_label(colorby)
 
-            #plt.tight_layout()
             plt.savefig(self._plot_dir + model._title + '_single_events_3D_{}.png'.format(colorby))
             plt.close()
 
 
-    def plot_event_displays(self, pulsemap_name, model_names=None, benchmark_names=None, colorby='fTime', k=0.1, random_seed=42, allpanels=False, auto_rotate=False, force_rotate=None):
+    def plot_event_displays(self, model_names=None, benchmark_names=None, colorby='fTime', allpanels=False, auto_rotate=False, force_rotate=None):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
@@ -147,7 +148,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
 
             # Get a selection of events that fit the panels, and their event info
             events, features_list, truths_list, labels, model_diffs, benchmark_diffs, vmin, vmax = self.get_good_bad_pools(
-                model, benchmark, pulsemap_name, colorby, k, allpanels, random_seed
+                model, benchmark, colorby, allpanels
             )
 
             # Loop over panels
@@ -208,7 +209,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             plt.close()
 
 
-    def plot_several_event_displays(self, pulsemap_name, model_names=None, benchmark_names=None, rows=3, columns=5, colorby='fTime', k=0.1, random_seed=42):
+    def plot_several_event_displays(self, model_names=None, benchmark_names=None, rows=3, columns=5, colorby='fTime'):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
@@ -223,14 +224,14 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
 
             fig = plt.figure(figsize=(columns*8, rows*7))
 
-            RNG = np.random.default_rng(seed=random_seed)
+            RNG = np.random.default_rng(seed=self._random_seed)
             seeds = RNG.choice(1000, (rows, columns))
 
             for m in range(rows):
                 for n in range(columns):
 
                     _, features_list, _, _, _, _, _, _ = self.get_good_bad_pools(
-                        model, benchmark, pulsemap_name, colorby, k, False, seeds[m,n]
+                        model, benchmark, colorby, False, seeds[m,n]
                     )
                     features = features_list[0]
 
