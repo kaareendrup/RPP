@@ -176,8 +176,8 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
 
                 # Plot
                 ax_top.scatter(feats_top['phi'], feats_top['r'], c=feats_top[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax, label=label)
-                ax_bottom.scatter(feats_bottom['phi'], feats_bottom['r'], c=feats_bottom[colorby], marker='.', cmap=self._darkmap, vmin=vmin, vmax=vmax, s=1.5)
-                c_data = ax_sides.scatter(feats_sides['phi'], feats_sides['fZ'], c=feats_sides[colorby], marker='.', cmap=self._darkmap, vmin=vmin, vmax=vmax, s=1.5)
+                ax_bottom.scatter(feats_bottom['phi'], feats_bottom['r'], c=feats_bottom[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax)
+                c_data = ax_sides.scatter(feats_sides['phi'], feats_sides['fZ'], c=feats_sides[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax)
 
                 ax_top.set_theta_zero_location('S')
                 ax_bottom.set_theta_zero_location('N')
@@ -230,10 +230,16 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             for m in range(rows):
                 for n in range(columns):
 
-                    _, features_list, _, _, _, _, _, _ = self.get_good_bad_pools(
+                    events, features_list, truths_list, _, _, _, _, _ = self.get_good_bad_pools(
                         model, benchmark, colorby, False, seeds[m,n]
                     )
-                    features = features_list[0]
+                    event, features, truths = features_list[0], truths_list[0], events[0]
+
+                    # Create label
+                    label = r'$\nu_e$' if abs(truths['pid'].to_numpy()[0]) == 12 else r'$\nu_\mu$'
+                    if truths['particle_sign'].to_numpy()[0] == -1:
+                        label = r'$\overline{'+label[1:-1]+r'}$'
+                    label = label + '  #' + str(event)
 
                     # Create subplots
                     ax_top = plt.subplot(3*rows, columns, (m*3*columns+n+0*columns+1), projection='polar')
@@ -250,7 +256,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                     feats_sides = features[abs(features['fZ']) < 549.784241]
 
                     # Plot
-                    ax_top.scatter(feats_top['phi'], feats_top['r'], c=feats_top[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax)
+                    ax_top.scatter(feats_top['phi'], feats_top['r'], c=feats_top[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax, label=label)
                     ax_bottom.scatter(feats_bottom['phi'], feats_bottom['r'], c=feats_bottom[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax)
                     c_data = ax_sides.scatter(feats_sides['phi'], feats_sides['fZ'], c=feats_sides[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax)
 
@@ -259,6 +265,8 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                     ax_bottom.set_theta_direction('clockwise')
                     ax_sides.set_xlim(-np.pi,np.pi)
                     ax_sides.set_ylim(-549.784241,549.784241)
+
+                    ax_top.legend(loc='upper left', bbox_to_anchor=(1.08, 1.02))
 
                     # Remove axes and set black BG
                     for ax in (ax_top, ax_bottom, ax_sides):
