@@ -233,7 +233,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                     events, features_list, truths_list, _, _, _, _, _ = self.get_good_bad_pools(
                         model, benchmark, colorby, False, seeds[m,n]
                     )
-                    event, features, truths = features_list[0], truths_list[0], events[0]
+                    event, features, truths = events[0], features_list[0], truths_list[0]
 
                     # Create label
                     label = r'$\nu_e$' if abs(truths['pid'].to_numpy()[0]) == 12 else r'$\nu_\mu$'
