@@ -36,7 +36,7 @@ def polar_shift(phi):
     return phi - (phi//(np.pi)*(2*np.pi))
 
 
-def rotate_polar_mean(phi, auto_rotate, force_rotation=False):
+def rotate_polar_mean(phi, auto_rotate, force_rotation=None):
 
     if auto_rotate and (force_rotation is not None):
         print('Two rotating methods specified. Using forced rotation.')

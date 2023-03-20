@@ -215,15 +215,10 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             plt.close()
 
 
-    def plot_several_event_displays(self, model_names=None, benchmark_names=None, rows=3, columns=5, colorby='fTime'):
+    def plot_several_event_displays(self, model_names=None, benchmark_names=None, rows=3, columns=5, colorby='fTime', auto_rotate=False):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
-
-        if colorby == 'fTime':
-            vmin, vmax = 1100, 1400
-        else:
-            vmin, vmax = 0, 50
 
         # Loop over models
         for model, benchmark in zip(models, benchmarks):
@@ -252,9 +247,11 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                     ax_sides = plt.subplot(3*rows, columns, (m*3*columns+n+1*columns+1))
                     ax_bottom = plt.subplot(3*rows, columns, (m*3*columns+n+2*columns+1), projection='polar')
 
-                    # Convert to polar
+                    # Convert to polar and rotate if specified
                     features['r'] = np.sqrt(features['fX']**2 + features['fY']**2)
                     features['phi'] = np.arctan2(features['fX'], features['fY'])
+
+                    features['phi'] = rotate_polar_mean(features['phi'], auto_rotate)
 
                     # Extract sides of barrel
                     feats_top = features[features['fZ'] == 549.784241]
@@ -262,9 +259,9 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                     feats_sides = features[abs(features['fZ']) < 549.784241]
 
                     # Plot
-                    ax_top.scatter(feats_top['phi'], feats_top['r'], c=feats_top[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax, label=label)
-                    ax_bottom.scatter(feats_bottom['phi'], feats_bottom['r'], c=feats_bottom[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax)
-                    c_data = ax_sides.scatter(feats_sides['phi'], feats_sides['fZ'], c=feats_sides[colorby], marker='.', s=1.5, cmap=self._darkmap, vmin=vmin, vmax=vmax)
+                    ax_top.scatter(feats_top['phi'], feats_top['r'], c=feats_top[colorby], marker='.', s=1.5, cmap=self._darkmap, label=label)
+                    ax_bottom.scatter(feats_bottom['phi'], feats_bottom['r'], c=feats_bottom[colorby], marker='.', s=1.5, cmap=self._darkmap)
+                    c_data = ax_sides.scatter(feats_sides['phi'], feats_sides['fZ'], c=feats_sides[colorby], marker='.', s=1.5, cmap=self._darkmap)
 
                     ax_top.set_theta_zero_location('S')
                     ax_bottom.set_theta_zero_location('N')
@@ -286,6 +283,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             cbar_ax = fig.add_axes([0.92, 0.1, 0.007, 0.8])
             cbar=fig.colorbar(c_data, cax=cbar_ax)
             cbar.set_label(colorby)
+            cbar_ax.yaxis.set_ticklabels([])
 
             plt.subplots_adjust(hspace=0)
             plt.savefig(self._plot_dir + model._title + '_multiple_events_displays_{}.png'.format(colorby))
