@@ -94,50 +94,53 @@ class ClassificationPlotter(Plotter):
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
 
         for model_list in [models, benchmarks]:
-                
-            # Plot 2D histogram and scatter plot of the same range
-            _, axs = plt.subplots(
-                1, 2, 
-                figsize=(18,7), 
-                gridspec_kw={'wspace': .3, 'width_ratios': [1,1]}
-            )
+            if model_list[0] is not None:
 
-            for model, ls in zip(model_list, self._style_dict['histogram']):
+                # Plot 2D histogram and scatter plot of the same range
+                _, axs = plt.subplots(
+                    1, 2, 
+                    figsize=(18,7), 
+                    gridspec_kw={'wspace': .3, 'width_ratios': [1,1]}
+                )
 
-                # Subdivide in truth and background
-                ones = model._predictions[np.where(model._truths == 1)]
-                zeros = model._predictions[np.where(model._truths == 0)]
-                
-                # Plot a regular and logged histogram
-                for log, ax in zip([False, True], axs):
+                for model, ls in zip(model_list, self._style_dict['histogram']):
 
-                    if shift_x:
-                        xmax = max([np.percentile(ones, 99.9), np.percentile(zeros, 99.9)])
-                        xmin = min([np.percentile(ones, .1), np.percentile(zeros, .1)])
-                        xmean = (np.mean(ones)+np.mean(zeros))/2
-                        dist = max([xmax-xmean, xmean-xmin])
-                        ax.set_xlim(xmean-dist*1.1, xmean+dist*1.1)
-                        bins = np.linspace(xmean-dist*1.1, xmean+dist*1.1, n_bins)
-                    else:
-                        bins = n_bins
+                    # Subdivide in truth and background
+                    ones = model._predictions[np.where(model._truths == 1)]
+                    zeros = model._predictions[np.where(model._truths == 0)]
+                    
+                    # Plot a regular and logged histogram
+                    for log, ax in zip([False, True], axs):
 
-                    ax.hist(ones, color=model._color, bins=bins, histtype='step', linestyle=ls, label=self._target_label +r' '+ model._label, zorder=1)
-                    ax.hist(zeros, color='k', bins=bins, histtype='step', linestyle=ls, label=self._background_label +r' '+ model._label, zorder=0)
+                        if shift_x:
+                            xmax = max([np.percentile(ones, 99.9), np.percentile(zeros, 99.9)])
+                            xmin = min([np.percentile(ones, .1), np.percentile(zeros, .1)])
+                            xmean = (np.mean(ones)+np.mean(zeros))/2
+                            dist = max([xmax-xmean, xmean-xmin])
+                            ax.set_xlim(xmean-dist*1.1, xmean+dist*1.1)
+                            xmin, xmax = (0, 1) if 1-max(model._predictions) < 1e5 else (xmean-dist*1.1, xmean+dist*1.1)
+                            bins = np.linspace(xmin, xmax, n_bins)
+                        else:
+                            bins = n_bins
 
-                    # Decorate subplot
-                    ax.set_xlabel('Model score', fontsize=12)
-                    ax.set_ylabel('Counts', fontsize=12)
-                    ax.set_title('Distribution of model score', fontsize=16)
+                        ax.hist(ones, color=model._color, bins=bins, histtype='step', linestyle=ls, label=self._target_label +r' '+ model._label, zorder=1)
+                        ax.hist(zeros, color='k', bins=bins, histtype='step', linestyle=ls, label=self._background_label +r' '+ model._label, zorder=0)
 
-                    if log:
-                        ax.set_yscale('log')
+                        # Decorate subplot
+                        ax.set_xlabel('Model score', fontsize=12)
+                        ax.set_ylabel('Counts', fontsize=12)
+                        ax.set_title('Distribution of model score', fontsize=16)
 
-            # Decorate plot
-            axs[0].legend(fontsize=12, loc=(0.085, 0.85))
-            self.add_rate_info(axs, model)
+                        if log:
+                            ax.set_yscale('log')
 
-            plt.savefig(self._plot_dir + model._title + "_clfhist.png")
-            plt.close()
+                    self.add_rate_info(axs, model)
+
+                # Decorate plot
+                axs[0].legend(fontsize=12, loc=(0.085, 0.85))
+
+                plt.savefig(self._plot_dir + model_list[0]._title + "_clfhist.png")
+                plt.close()
 
 
     def plot_performance_curve(self, curve_type='ROC', model_names=None, benchmark_names=None, log_x=False, get_background=False):
@@ -208,11 +211,11 @@ class ClassificationPlotter(Plotter):
 
             # Loop over models and add data to plot
             for m, ax in zip([model, benchmark], axs):
-                if m._energy is None:
-                    print("{}: No energy found. Skipping.".format(m._name))
-                    continue
+                if m is not None:
+                    if m._energy is None:
+                        print("{}: No energy found. Skipping.".format(m._name))
+                        continue
 
-                else:
                     m_ones = m._predictions[np.where(m._truths == 1)]
                     m_zeros = m._predictions[np.where(m._truths == 0)]
                     e_ones = m._energy[np.where(m._truths == 1)]
@@ -257,6 +260,10 @@ class ClassificationPlotter(Plotter):
         # Loop over models and add data to plot
         for model, benchmark in zip(models, benchmarks):
 
+            if benchmark is None:
+                print("{}: No benchmark model found. Skipping.".format(model._name))
+                continue
+
             _, axs = plt.subplots(
                     1, 2, 
                     figsize=(18,7), 
@@ -279,7 +286,6 @@ class ClassificationPlotter(Plotter):
                 ax.set_axisbelow(True)
                 ax.grid(linestyle='dotted')
                 ax.set_xlabel(benchmark._label, fontsize=12)
-                # ax.set_title('Comparison of model scores', fontsize=16)
                 leg = ax.legend(fontsize=12, markerscale=2, loc='center right')
                 for lh in leg.legendHandles: 
                     lh.set_alpha(1)
@@ -319,6 +325,8 @@ class ClassificationPlotter(Plotter):
         # Loop over models with the respective cuts
         for model, cuts in zip(models + benchmarks, thresholds):
 
+            if model is None:
+                continue
             if model._lepton_pos is None:
                 print("{}: No position found. Skipping.".format(model._name))
                 continue
@@ -376,6 +384,9 @@ class ClassificationPlotter(Plotter):
         # Loop over models with the respective cuts
         for model, benchmark, cuts_list in zip(models, benchmarks, thresholds):
             if model._lepton_pos is None:
+                print("{}: No benchmark found. Skipping.".format(model._name))
+                continue
+            if benchmark is None:
                 print("{}: No position found. Skipping.".format(model._name))
                 continue
 
