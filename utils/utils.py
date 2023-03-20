@@ -28,8 +28,8 @@ def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
 
 
 basic_colormap = make_default_colormap()
-dark_colormap = truncate_colormap(cm.get_cmap('gist_rainbow_r'), 0.35, 0.95)
-# dark_colormap = truncate_colormap(cm.get_cmap('viridis_r'), 0.05, 0.95)
+dark_colormap = truncate_colormap(cm.get_cmap('gist_rainbow'), 0.05, 0.65)
+# dark_colormap = truncate_colormap(cm.get_cmap('gist_rainbow_r'), 0.35, 0.95)
 
 
 basic_color_dict = {
