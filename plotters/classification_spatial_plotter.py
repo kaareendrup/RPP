@@ -6,6 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from RPP.plotters.classification_plotter import ClassificationPlotter
 from RPP.utils.data import query_database
 from RPP.utils.utils import basic_colormap, dark_colormap, basic_color_dict, basic_style_dict
+from RPP.utils.maths.maths import rotate_polar_mean
 
 class ClassificationSpatialPlotter(ClassificationPlotter):
 
@@ -136,6 +137,10 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
 
     def plot_event_displays(self, model_names=None, benchmark_names=None, colorby='fTime', allpanels=False, auto_rotate=False, force_rotate=None):
 
+        # Initialize
+        n_panels = 4 if allpanels else 2
+        force_rotate = [None]*n_panels if force_rotate is None else force_rotate
+
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
 
@@ -143,7 +148,6 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
         for model, benchmark in zip(models, benchmarks):
 
             # Initialize figure
-            n_panels = 4 if allpanels else 2
             fig = plt.figure(figsize=(n_panels*8, 7))
 
             # Get a selection of events that fit the panels, and their event info
@@ -152,7 +156,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             )
 
             # Loop over panels
-            for i, (event, features, truths, label) in enumerate(zip(events, features_list, truths_list, labels)):
+            for i, (event, features, truths, label, force_rotation) in enumerate(zip(events, features_list, truths_list, labels, force_rotate)):
 
                 # Create label
                 label = r'$\nu_e$' if abs(truths['pid'].to_numpy()[0]) == 12 else r'$\nu_\mu$'
@@ -165,9 +169,11 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                 ax_sides = plt.subplot(3, n_panels, (1*n_panels+i+1))
                 ax_bottom = plt.subplot(3, n_panels, (2*n_panels+i+1), projection='polar')
 
-                # Convert to polar
+                # Convert to polar and rotate if specified
                 features['r'] = np.sqrt(features['fX']**2 + features['fY']**2)
                 features['phi'] = np.arctan2(features['fX'], features['fY'])
+
+                features['phi'] = rotate_polar_mean(features['phi'], auto_rotate, force_rotation)
 
                 # Extract sides of barrel
                 feats_top = features[features['fZ'] == 549.784241]

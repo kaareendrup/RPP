@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import norm
+from scipy.stats import norm, circmean
 
 from RPP.utils.maths.fits import gaussian_fit
 from RPP.utils.maths.utils import fit_output
@@ -29,3 +29,22 @@ def bin_residual_width(bin_truths, bin_preds, verbose):
 def w_errorprop(w_compare, w_model, err_compare, err_model):
     return np.sqrt( w_model**2/w_compare**4 * err_compare + 1/w_compare**2 * err_model )
 
+
+def polar_shift(phi):
+    # Shist distribution to be between -pi and pi
+    phi = phi%(2*np.pi)
+    return phi - (phi//(np.pi)*(2*np.pi))
+
+
+def rotate_polar_mean(phi, auto_rotate, force_rotation=False):
+
+    if auto_rotate and (force_rotation is not None):
+        print('Two rotating methods specified. Using forced rotation.')
+
+    # Implement automatic or forced rotation if specified
+    if force_rotation is not None:
+        return polar_shift(phi - force_rotation)
+    elif auto_rotate:
+        return polar_shift(phi - circmean(phi))
+    else:
+        return phi
