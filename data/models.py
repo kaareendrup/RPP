@@ -59,16 +59,4 @@ class ClassificationModel(Model):
         background_model = copy.deepcopy(self)
         background_model.invert_results()
 
-        # background_model = Model(
-        #     self._name,
-        #     self._db_path,
-        #     1-self._predictions, 
-        #     1-self._truths, 
-        #     self._event_nos, 
-        #     1-self._original_truths,
-        #     self._energy, 
-        #     self._lepton_pos,
-        #     self._color,
-        #     self._cut_functions,
-        # )
         return background_model
