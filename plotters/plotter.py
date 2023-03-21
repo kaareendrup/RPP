@@ -24,13 +24,15 @@ class Plotter:
         self._benchmarks_list = []
 
 
-    def load_csv(self, file, database=None, reverse=False, cut_functions=None):
+    def load_csv(self, file, database=None, cut_functions=None, target=None, **kwargs):
         
         data = pd.read_csv(file)
         data.sort_values('event_no', inplace=True, ignore_index=True)
         event_nos = data['event_no'].to_numpy()
 
-        target = self._target if not reverse else self._background
+        if target is None:
+            target = self._target
+
         original_truths = data[target].to_numpy()
 
         # Apply the relevant cuts
@@ -64,37 +66,19 @@ class Plotter:
         return preds, truths, event_nos, energy, original_truths, lepton_pos
 
 
-    def make_model(self, model_name, db, preds, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions, **kwargs):
-
-        model = self._model_class(
-            model_name,
-            db, 
-            preds,
-            truths,
-            event_nos,
-            original_truths,
-            energy,
-            lepton_pos, 
-            color,
-            cut_functions,
-            **kwargs, 
-        )
-        return model
-
-
-    def add_results(self, results_file, model_name, database_file=None, color=None, reverse=False, cut_functions=None, **kwargs):
+    def add_results(self, results_file, model_name, database_file=None, color=None, cut_functions=None, **kwargs):
 
         # Get color from dict if it is not defined
         if color is None:
             color=self._color_dict['model'][len(self._models_list)]
 
         # Load data from csv
-        preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(results_file, database_file, reverse, cut_functions)
-        if reverse:
-            preds, truths, original_truths = 1-preds, 1-truths, 1-original_truths
+        preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(results_file, database_file, cut_functions, **kwargs)
+        # if reverse:
+        #     preds, truths, original_truths = 1-preds, 1-truths, 1-original_truths
 
         # Define model parameters and append to list
-        model = self.make_model(
+        model = self._model_class(
             model_name,
             database_file,
             preds,
@@ -121,7 +105,7 @@ class Plotter:
         if benchmark_file[-4:] == '.csv':
 
             # Load data
-            preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(benchmark_file, database_file, cut_functions)
+            preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(benchmark_file, database_file, cut_functions, **kwargs)
 
         elif benchmark_file[-3:] == '.db':
 
@@ -150,7 +134,7 @@ class Plotter:
             raise SystemExit('Incorrect file type. Please use .csv or .db')
 
         # Define model parameters and append to list
-        model = self.make_model(
+        model = self._model_class(
             model_name,
             database_file,
             preds,

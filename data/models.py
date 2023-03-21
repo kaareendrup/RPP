@@ -34,7 +34,7 @@ class Model:
 
 class ClassificationModel(Model):
 
-    def __init__(self, model_name, database, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions=None, target_rates=None, target_cuts=None):
+    def __init__(self, model_name, database, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions=None, target_rates=None, target_cuts=None, reverse=False):
 
         super().__init__(model_name, database, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions)
 
@@ -46,6 +46,9 @@ class ClassificationModel(Model):
         self._bg_rates = bg_rates
         self._target_cuts = target_cuts
         self._bg_cuts = bg_cuts
+
+        if reverse:
+            self.invert_results()
 
 
     def invert_results(self):

@@ -19,6 +19,12 @@ class ClassificationPlotter(Plotter):
         self._show_cuts = show_cuts
 
 
+    def load_csv(self, file, database=None, cut_functions=None, target=None, reverse=False, **kwargs):
+
+        target = self._target if not reverse else self._background
+        return super().load_csv(file, database, cut_functions, target)
+
+
     def apply_rates_to_plot(self, axs, model, cut, xs, ys, is_bg, horizontal, annotate):
 
         # Get position # TODO: This is a mess
