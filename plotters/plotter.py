@@ -1,6 +1,6 @@
 import pandas as pd
 
-from RPP.utils.utils import make_plot_dir, fiTQun_dict, target_extractor, beautify_label
+from RPP.utils.utils import make_plot_dir, fiTQun_dict, beautify_label
 from RPP.utils.fiTQun_schemes import pred_pure
 from RPP.utils.data import query_database
 from RPP.data.models import Model
@@ -8,10 +8,10 @@ from RPP.data.models import Model
 
 class Plotter:
 
-    #def __init__(self, plot_dir, target, color_dict, style_dict, cmap, cut_functions=None):
     def __init__(self, name, plot_dir, target, color_dict, style_dict, cmap):
 
         # Member variables # TODO: Create common string that is prepended to plot names
+        self._model_class = Model
         self._plot_dir = make_plot_dir(name, target, plot_dir)
         self._target = target
         self._cmap = cmap
@@ -49,35 +49,24 @@ class Plotter:
 
         preds, truths = data[target+'_pred'].to_numpy(), data[target].to_numpy()
         
+        # Get energy and position data
         if database is not None:
-            try:
-                features_query = 'SELECT fLE, fVx, fVy, fVz, event_no FROM truth WHERE event_no IN {}'.format(tuple(event_nos))
-                features = query_database(database, features_query)
-                features.sort_values('event_no', inplace=True, ignore_index=True)
-                energy = features['fLE'].to_numpy()
-                lepton_pos = features[['fVx', 'fVy', 'fVz']].to_numpy()
-            except:
-                features_query = 'SELECT mc_e, event_no FROM fiTQun WHERE event_no IN {}'.format(tuple(event_nos))
-                features = query_database(database, features_query)
-                features.sort_values('event_no', inplace=True, ignore_index=True)
-                energy = features['mc_e'].to_numpy()
-                lepton_pos = None
+            features_query = 'SELECT fLE, fVx, fVy, fVz, event_no FROM truth WHERE event_no IN {}'.format(tuple(event_nos))
+            features = query_database(database, features_query)
+            features.sort_values('event_no', inplace=True, ignore_index=True)
+            energy = features['fLE'].to_numpy()
+            lepton_pos = features[['fVx', 'fVy', 'fVz']].to_numpy()
         else:
             print('No database specified, no energy and position extracted')
             energy = None
             lepton_pos = None
 
-
         return preds, truths, event_nos, energy, original_truths, lepton_pos
 
 
-    def make_model(self, model_name, db, preds, truths, event_nos, original_truths, energy, lepton_pos, color, target_rates, target_cuts, cut_functions):
+    def make_model(self, model_name, db, preds, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions, **kwargs):
 
-        # Get target rates based on what is specified
-        target_rates, bg_rates = target_extractor(target_rates)
-        target_cuts, bg_cuts = target_extractor(target_cuts)
-
-        model = Model(
+        model = self._model_class(
             model_name,
             db, 
             preds,
@@ -87,16 +76,13 @@ class Plotter:
             energy,
             lepton_pos, 
             color,
-            target_rates,
-            bg_rates,
-            target_cuts,
-            bg_cuts,
             cut_functions,
+            **kwargs, 
         )
         return model
 
 
-    def add_results(self, results_file, model_name, database_file=None, color=None, target_rates=None, target_cuts=None, reverse=False, cut_functions=None):
+    def add_results(self, results_file, model_name, database_file=None, color=None, reverse=False, cut_functions=None, **kwargs):
 
         # Get color from dict if it is not defined
         if color is None:
@@ -118,16 +104,14 @@ class Plotter:
             energy,
             lepton_pos,
             color,
-            target_rates,
-            target_cuts,
             cut_functions,
+            **kwargs,
         )
 
         self._models_list.append(model)
 
 
-    # def add_benchmark(self, benchmark_file, model_name, pred_scheme=pred_pure, link_models=None, color=None, database_file=None, target_rates=None, target_cuts=None):
-    def add_benchmark(self, benchmark_file, model_name, pred_scheme=pred_pure, link_models=None, color=None, database_file=None, target_rates=None, target_cuts=None, cut_functions=None):
+    def add_benchmark(self, benchmark_file, model_name, pred_scheme=pred_pure, link_models=None, color=None, database_file=None, cut_functions=None, **kwargs):
         
         # Get color from dict if it is not defined
         if color is None:
@@ -137,7 +121,6 @@ class Plotter:
         if benchmark_file[-4:] == '.csv':
 
             # Load data
-            # preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(benchmark_file, database_file)
             preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(benchmark_file, database_file, cut_functions)
 
         elif benchmark_file[-3:] == '.db':
@@ -177,9 +160,8 @@ class Plotter:
             energy,
             lepton_pos, 
             color,
-            target_rates,
-            target_cuts,
             cut_functions,
+             **kwargs,
         )
 
         self._benchmarks_list.append(model)

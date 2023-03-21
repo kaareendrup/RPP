@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve
 
 from RPP.plotters.plotter import Plotter
+from RPP.data.models import ClassificationModel
 from RPP.utils.utils import basic_colormap, basic_color_dict, basic_style_dict, curve_config_dict, calculate_alpha, beautify_label
 
 
@@ -12,6 +13,7 @@ class ClassificationPlotter(Plotter):
     def __init__(self, name, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap, show_cuts=True):
         super().__init__(name, plot_dir, target, color_dict, style_dict, cmap)
 
+        self._model_class = ClassificationModel
         self._background = background
         self._background_label = beautify_label(background)
         self._show_cuts = show_cuts
@@ -19,7 +21,7 @@ class ClassificationPlotter(Plotter):
 
     def apply_rates_to_plot(self, axs, model, cut, xs, ys, is_bg, horizontal, annotate):
 
-        # Get position
+        # Get position # TODO: This is a mess
         pos_dict = {False: {False: [0.66, 0.82], True: [0.1, 0.82]}, True: {False: [0.73, 0.87], True: [0.73, 0.37]}}
         pos = pos_dict[horizontal][is_bg]
 
@@ -118,7 +120,7 @@ class ClassificationPlotter(Plotter):
                             xmean = (np.mean(ones)+np.mean(zeros))/2
                             dist = max([xmax-xmean, xmean-xmin])
                             ax.set_xlim(xmean-dist*1.1, xmean+dist*1.1)
-                            xmin, xmax = (0, 1) if 1-max(model._predictions) < 1e5 else (xmean-dist*1.1, xmean+dist*1.1)
+                            xmin, xmax = (0, 1) if abs(1-max(model._predictions)) < 1e-5 else (xmean-dist*1.1, xmean+dist*1.1)
                             bins = np.linspace(xmin, xmax, n_bins)
                         else:
                             bins = n_bins
