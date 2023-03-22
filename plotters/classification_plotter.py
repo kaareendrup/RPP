@@ -1,11 +1,10 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve
 
 from RPP.plotters.plotter import Plotter
 from RPP.data.models import ClassificationModel
-from RPP.utils.utils import basic_colormap, basic_color_dict, basic_style_dict, curve_config_dict, calculate_alpha, beautify_label
+from RPP.utils.utils import basic_colormap, basic_color_dict, basic_style_dict, curve_config_dict, calculate_alpha, beautify_label, add_rates
 
 
 class ClassificationPlotter(Plotter):
@@ -126,7 +125,7 @@ class ClassificationPlotter(Plotter):
     def plot_performance_curve(self, curve_type='ROC', model_names=None, benchmark_names=None, log_x=False, get_background=False):
 
         # Get curve type and label configuration
-        _, _, x_label, y_label, _, add_rates = curve_config_dict[curve_type]
+        _, _, x_label, y_label, = curve_config_dict[curve_type]
         target, title = (self._target_label, curve_type) if not get_background else (self._background_label, curve_type+'_BG')
 
         # Add the correct models and benchmarks if not supplied
@@ -149,12 +148,11 @@ class ClassificationPlotter(Plotter):
                 # Add data to plot
                 for ax in axs:
 
-                    # add_rates(axs, x_rate, y_rate, thresholds, model)
                     x_rate, y_rate, _, auc = model.get_performance_curve(curve_type)
                     ax.plot(x_rate, y_rate, color=model._color, label=model._label + ' - AUC = %.6s'%auc, linestyle='solid')
 
                 model.calculate_target_rates(curve_type)
-                add_rates(axs, model)
+                add_rates(axs, model, curve_type)
 
         # Add plot style and info
         for ax in axs:

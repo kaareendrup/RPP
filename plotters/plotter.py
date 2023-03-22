@@ -195,4 +195,3 @@ class Plotter:
                 benchmarks[i] = self._benchmarks_list[models[i]._benchmark_index]
 
         return models, benchmarks
-

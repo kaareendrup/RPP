@@ -2,7 +2,7 @@
 import numpy as np
 import copy
 
-from RPP.utils.utils import beautify_label, target_extractor, curve_config_dict
+from RPP.utils.utils import beautify_label, target_extractor, get_rates, curve_config_dict
 from RPP.utils.data import Cutter
 
 class Model:
@@ -71,6 +71,7 @@ class ClassificationModel(Model):
             background_model._name = self._name + '_BG'
             background_model._label = beautify_label(background_model._name)[1:-1]
             background_model.invert_results()
+
             background_model._target_rates = background_model._bg_rates
             background_model._bg_rates = background_model._target_rates
             background_model._target_cuts = background_model._bg_cuts
@@ -87,7 +88,7 @@ class ClassificationModel(Model):
         if self._performance_curves[curve_type] is None:
 
             # Calculate curve parameters and add to dictionary
-            metric_function, metric_score, _, _, _, _ = curve_config_dict[curve_type]
+            metric_function, metric_score, _, _, = curve_config_dict[curve_type]
             x_rate, y_rate, thresholds = metric_function(self._truths, self._predictions)
             auc = metric_score(self._truths, self._predictions)
 
@@ -100,10 +101,9 @@ class ClassificationModel(Model):
 
         # Get performance curve parameters TODO: Remove curve dict from here
         x_rate, y_rate, thresholds, _ = self.get_performance_curve(curve_type)
-        _, _, _, _, get_rates, _ = curve_config_dict[curve_type]
 
         # Get the needed x, y, and thresholds for each desired rate or cut
-        self._performance_rates[curve_type] = get_rates(x_rate, y_rate, thresholds, self._target_rates, self._target_cuts)
+        self._performance_rates[curve_type] = get_rates(x_rate, y_rate, thresholds, self._target_rates, self._target_cuts, curve_type)
 
         # Add the the rate info to each cut function 
         for cutter in self._cut_functions:

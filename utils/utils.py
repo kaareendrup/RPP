@@ -69,7 +69,7 @@ def PR_flip_outputs(y_true, probas_pred, pos_label=None):
     return rec, pre, thresholds
 
 
-def ROC_get_rates(fpr, tpr, thresholds, target_rates, target_cuts):
+def get_rates(x, y, thresholds, target_rates, target_cuts, curve_type='ROC'):
 
     rates_list = []
 
@@ -78,65 +78,46 @@ def ROC_get_rates(fpr, tpr, thresholds, target_rates, target_cuts):
 
     if target_rates is not None:
         for rate in target_rates:
-            diffs = abs(fpr - (1-rate))
+
+            if curve_type=='ROC':
+                diffs = abs(x - (1-rate))
+            if curve_type=='PRC':
+                diffs = abs(y - rate)
+                
             idx = np.argmin(diffs)
-            rates_list.append([fpr[idx], tpr[idx], thresholds[idx]])
+            rates_list.append([x[idx], y[idx], thresholds[idx]])
 
     elif target_cuts is not None:
         for cut in target_cuts:
             diffs = abs(thresholds - cut)
             idx = np.argmin(diffs)
-            rates_list.append([fpr[idx], tpr[idx], thresholds[idx]])
+            rates_list.append([x[idx], y[idx], thresholds[idx]])
 
     return rates_list
 
 
-def PR_get_rates(rec, pre, thresholds, target_rates, target_cuts):
+def add_rates(axs, model, curve_type='ROC'):
 
-    rates_list = []
+    for (i_x, i_y, ithreshold) in model._performance_rates['ROC']:
+        axs[-1].scatter(i_x, i_y, color='k', s=10, zorder=3)
+        
+        if curve_type=='ROC':
+            axs[-1].text(i_x*1.2, i_y-.005, 'Cut: %.4g'%ithreshold, va='top', fontsize=9)
+            axs[-1].text(i_x*1.2, i_y-.035, 'FPR: %.2g'%(i_x*100)+'%', va='top', fontsize=9)
+            axs[-1].text(i_x*1.2, i_y-.065, 'TPR: %.4g'%(i_y*100)+'%', va='top', fontsize=9)
 
-    if target_rates is not None and target_cuts is not None:
-        print('Both target cuts and rates specified. Using rates.')
-
-    if target_rates is not None:
-        for rate in target_rates:
-            diffs = abs(pre - rate)
-            idx = np.argmin(diffs)
-            rates_list.append([rec[idx], pre[idx], thresholds[idx]])
-
-    if target_cuts is not None:
-        for cut in target_cuts:
-            diffs = abs(thresholds - cut)
-            idx = np.argmin(diffs)
-            rates_list.append([rec[idx], pre[idx], thresholds[idx]])
-
-    return rates_list
-
-
-def ROC_add_rates(axs, model):
-
-    for (ifpr, itpr, ithreshold) in model._performance_rates['ROC']:
-        axs[-1].scatter(ifpr, itpr, color='k', s=10, zorder=3)
-        axs[-1].text(ifpr*1.2, itpr-.005, 'Cut: %.4g'%ithreshold, va='top', fontsize=9)
-        axs[-1].text(ifpr*1.2, itpr-.035, 'FPR: %.2g'%(ifpr*100)+'%', va='top', fontsize=9)
-        axs[-1].text(ifpr*1.2, itpr-.065, 'TPR: %.4g'%(itpr*100)+'%', va='top', fontsize=9)
-
-
-def PRC_add_rates(axs, model):
-
-    for (irec, ipre, ithreshold) in model._performance_rates['PRC']:
-        axs[-1].scatter(irec, ipre, color='k', s=10, zorder=3)
-        axs[-1].text(irec-.15, ipre-.02, 'Cut: %.3g'%ithreshold, va='top', fontsize=9)
-        axs[-1].text(irec-.15, ipre-.05, 'Precision: %.3g'%ipre, va='top', fontsize=9)
-        axs[-1].text(irec-.15, ipre-.08, 'Recall: %.3g'%irec, va='top', fontsize=9)
+        if curve_type=='PRC':
+            axs[-1].text(i_x-.15, i_y-.02, 'Cut: %.3g'%ithreshold, va='top', fontsize=9)
+            axs[-1].text(i_x-.15, i_y-.05, 'Precision: %.3g'%i_y, va='top', fontsize=9)
+            axs[-1].text(i_x-.15, i_y-.08, 'Recall: %.3g'%i_x, va='top', fontsize=9)
 
 
 curve_config_dict = {
     'ROC': [
-        roc_curve, roc_auc_score, 'FPR', 'TPR', ROC_get_rates, ROC_add_rates
+        roc_curve, roc_auc_score, 'FPR', 'TPR'
     ],
     'PR': [
-        PR_flip_outputs, average_precision_score, 'Efficiency (Recall)', 'Purity (Precision)', PR_get_rates, ROC_add_rates
+        PR_flip_outputs, average_precision_score, 'Efficiency (Recall)', 'Purity (Precision)'
     ]
 }
 
