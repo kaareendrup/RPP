@@ -38,11 +38,12 @@ class Plotter:
         # Apply the relevant cuts
         if cut_functions is not None:
             if database is not None:
+
                 for function in cut_functions:
                     event_nos = function.cut(event_nos, database)
 
-                    # Replace original truths if the first cut is cc/nc
-                    if function._name in ['cc', 'nc']:
+                    # Replace original truths if the function is not a checkpoint
+                    if not function._checkpoint:
                         original_truths = data[data['event_no'].isin(event_nos)][target].to_numpy()
 
                 data = data[data['event_no'].isin(event_nos)]
