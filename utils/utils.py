@@ -69,60 +69,74 @@ def PR_flip_outputs(y_true, probas_pred, pos_label=None):
     return rec, pre, thresholds
 
 
-# TODO: Lot's of repetition in the following four segments
-def ROC_add_rates(axs, fpr, tpr, thresholds, model):
+def ROC_get_rates(fpr, tpr, thresholds, target_rates, target_cuts):
 
-    # if model._target_rates is not None:
-    if model._target_rates is not None and model._name != 'fiTQun': # TODO: This is not permanent
-        for rate in model._target_rates:
+    rates_list = []
+
+    if target_rates is not None and target_cuts is not None:
+        print('Both target cuts and rates specified. Using rates.')
+
+    if target_rates is not None:
+        for rate in target_rates:
             diffs = abs(fpr - (1-rate))
             idx = np.argmin(diffs)
-            ifpr, itpr, ithreshold = fpr[idx], tpr[idx], thresholds[idx]
-            axs[-1].scatter(ifpr, itpr, color='k', s=10, zorder=3)
-            axs[-1].text(ifpr*1.2, itpr-.005, 'Cut: %.4g'%ithreshold, va='top', fontsize=9)
-            axs[-1].text(ifpr*1.2, itpr-.035, 'FPR: %.2g'%(ifpr*100)+'%', va='top', fontsize=9)
-            axs[-1].text(ifpr*1.2, itpr-.065, 'TPR: %.4g'%(itpr*100)+'%', va='top', fontsize=9)
+            rates_list.append([fpr[idx], tpr[idx], thresholds[idx]])
 
-    # if model._target_cuts is not None:
-    #     for cut in model._target_cuts:
-    #         diffs = abs(thresholds - cut)
-    #         idx = np.argmin(diffs)
-    #         ifpr, itpr, ithreshold = fpr[idx], tpr[idx], thresholds[idx]
-    #         axs[-1].scatter(ifpr, itpr, color='k', s=10, zorder=3)
-    #         axs[-1].text(ifpr*1.2, itpr-.005, 'Cut: %.3g'%ithreshold, va='top', fontsize=9)
-    #         axs[-1].text(ifpr*1.2, itpr-.035, 'FPR: %.3g'%ifpr, va='top', fontsize=9)
-    #         axs[-1].text(ifpr*1.2, itpr-.065, 'TPR: %.3g'%itpr, va='top', fontsize=9)
+    elif target_cuts is not None:
+        for cut in target_cuts:
+            diffs = abs(thresholds - cut)
+            idx = np.argmin(diffs)
+            rates_list.append([fpr[idx], tpr[idx], thresholds[idx]])
+
+    return rates_list
 
 
-def PR_add_rates(axs, rec, pre, thresholds, model):
+def PR_get_rates(rec, pre, thresholds, target_rates, target_cuts):
 
-    if model._target_rates is not None and model._name != 'fiTQun': # TODO: This is not permanent
-        for rate in model._target_rates:
+    rates_list = []
+
+    if target_rates is not None and target_cuts is not None:
+        print('Both target cuts and rates specified. Using rates.')
+
+    if target_rates is not None:
+        for rate in target_rates:
             diffs = abs(pre - rate)
             idx = np.argmin(diffs)
-            ipre, irec, ithreshold = pre[idx], rec[idx], thresholds[idx]
-            axs[-1].scatter(irec, ipre, color='k', s=10, zorder=3)
-            axs[-1].text(irec-.15, ipre-.02, 'Cut: %.4g'%ithreshold, va='top', fontsize=9)
-            axs[-1].text(irec-.15, ipre-.05, 'Precision: %.2g'%(ipre*100)+'%', va='top', fontsize=9)
-            axs[-1].text(irec-.15, ipre-.08, 'Recall: %.4g'%(irec*100)+'%', va='top', fontsize=9)
+            rates_list.append([rec[idx], pre[idx], thresholds[idx]])
 
-    # if model._target_cuts is not None:
-    #     for cut in model._target_cuts:
-    #         diffs = abs(thresholds - cut)
-    #         idx = np.argmin(diffs)
-    #         ipre, irec, ithreshold = pre[idx], rec[idx], thresholds[idx]
-    #         axs[-1].scatter(irec, ipre, color='k', s=10, zorder=3)
-    #         axs[-1].text(irec-.15, ipre-.02, 'Cut: %.3g'%ithreshold, va='top', fontsize=9)
-    #         axs[-1].text(irec-.15, ipre-.05, 'Precision: %.3g'%ipre, va='top', fontsize=9)
-    #         axs[-1].text(irec-.15, ipre-.08, 'Recall: %.3g'%irec, va='top', fontsize=9)
+    if target_cuts is not None:
+        for cut in target_cuts:
+            diffs = abs(thresholds - cut)
+            idx = np.argmin(diffs)
+            rates_list.append([rec[idx], pre[idx], thresholds[idx]])
+
+    return rates_list
+
+
+def ROC_add_rates(axs, model):
+
+    for (ifpr, itpr, ithreshold) in model._performance_rates['ROC']:
+        axs[-1].scatter(ifpr, itpr, color='k', s=10, zorder=3)
+        axs[-1].text(ifpr*1.2, itpr-.005, 'Cut: %.4g'%ithreshold, va='top', fontsize=9)
+        axs[-1].text(ifpr*1.2, itpr-.035, 'FPR: %.2g'%(ifpr*100)+'%', va='top', fontsize=9)
+        axs[-1].text(ifpr*1.2, itpr-.065, 'TPR: %.4g'%(itpr*100)+'%', va='top', fontsize=9)
+
+
+def PRC_add_rates(axs, model):
+
+    for (irec, ipre, ithreshold) in model._performance_rates['PRC']:
+        axs[-1].scatter(irec, ipre, color='k', s=10, zorder=3)
+        axs[-1].text(irec-.15, ipre-.02, 'Cut: %.3g'%ithreshold, va='top', fontsize=9)
+        axs[-1].text(irec-.15, ipre-.05, 'Precision: %.3g'%ipre, va='top', fontsize=9)
+        axs[-1].text(irec-.15, ipre-.08, 'Recall: %.3g'%irec, va='top', fontsize=9)
 
 
 curve_config_dict = {
     'ROC': [
-        roc_curve, roc_auc_score, 'FPR', 'TPR', ROC_add_rates
+        roc_curve, roc_auc_score, 'FPR', 'TPR', ROC_get_rates, ROC_add_rates
     ],
     'PR': [
-        PR_flip_outputs, average_precision_score, 'Efficiency (Recall)', 'Purity (Precision)', PR_add_rates
+        PR_flip_outputs, average_precision_score, 'Efficiency (Recall)', 'Purity (Precision)', PR_get_rates, ROC_add_rates
     ]
 }
 

@@ -1,8 +1,9 @@
 
+import numpy as np
 import copy
 
-from RPP.utils.utils import beautify_label, target_extractor
-
+from RPP.utils.utils import beautify_label, target_extractor, curve_config_dict
+from RPP.utils.data import Cutter
 
 class Model:
     
@@ -50,6 +51,10 @@ class ClassificationModel(Model):
         if reverse:
             self.invert_results()
 
+        self._background_model = None
+        self._performance_curves = {'ROC': None, 'PRC': None}
+        self._performance_rates = {'ROC': None, 'PRC': None}
+
 
     def invert_results(self):
         self._predictions = 1-self._predictions
@@ -59,7 +64,80 @@ class ClassificationModel(Model):
 
     def get_background_model(self):
 
-        background_model = copy.deepcopy(self)
-        background_model.invert_results()
+        # Check if a background model already exists
+        if self._background_model is None:
 
-        return background_model
+            background_model = copy.deepcopy(self)
+            background_model._name = self._name + '_BG'
+            background_model._label = beautify_label(background_model._name)[1:-1]
+            background_model.invert_results()
+            background_model._target_rates = background_model._bg_rates
+            background_model._bg_rates = background_model._target_rates
+            background_model._target_cuts = background_model._bg_cuts
+            background_model._bg_cuts = background_model._target_cuts
+
+            self._background_model = background_model
+
+        return self._background_model
+    
+
+    def get_performance_curve(self, curve_type):
+
+        # Check of the model already has information for the desired curve
+        if self._performance_curves[curve_type] is None:
+
+            # Calculate curve parameters and add to dictionary
+            metric_function, metric_score, _, _, _, _ = curve_config_dict[curve_type]
+            x_rate, y_rate, thresholds = metric_function(self._truths, self._predictions)
+            auc = metric_score(self._truths, self._predictions)
+
+            self._performance_curves[curve_type] = (x_rate, y_rate, thresholds, auc)
+
+        return self._performance_curves[curve_type]
+
+
+    def calculate_target_rates(self, curve_type):
+
+        # Get performance curve parameters TODO: Remove curve dict from here
+        x_rate, y_rate, thresholds, _ = self.get_performance_curve(curve_type)
+        _, _, _, _, get_rates, _ = curve_config_dict[curve_type]
+
+        # Get the needed x, y, and thresholds for each desired rate or cut
+        self._performance_rates[curve_type] = get_rates(x_rate, y_rate, thresholds, self._target_rates, self._target_cuts)
+
+        # Add the the rate info to each cut function 
+        for cutter in self._cut_functions:
+            if cutter._performance_curve_rates[curve_type] is None:
+
+                cutter_rates_list = copy.deepcopy(self._performance_rates[curve_type])
+
+                if cutter._checkpoint:
+                    ones_ratio = np.count_nonzero(self._truths==1)/np.count_nonzero(self._original_truths==1)
+                    zeros_ratio = np.count_nonzero(self._truths==0)/np.count_nonzero(self._original_truths==0)
+
+                    # Loop over results corresponding to the different target rates/cuts
+                    for rates in cutter_rates_list:
+
+                        # Scale the required rates
+                        if curve_type == 'ROC':
+                            rates[0] *= zeros_ratio
+                            rates[1] *= ones_ratio
+                        if curve_type == 'PRC':
+                            rates[0] *= ones_ratio
+
+                cutter._performance_curve_rates[curve_type] = cutter_rates_list
+        
+
+    def get_performance_iterator(self, label, as_bg=False, curve_type='ROC'):
+
+        # Get threshold and construct name
+        threshold = self._performance_rates[curve_type][0][2]
+        if as_bg:
+            threshold = 1-threshold
+        name = r'Cut$_{%s} = %.3f$' % (label, threshold)
+
+        # Create placeholder cutter and concatenate with cut function list
+        default_cutter = Cutter(name, checkpoint=True)
+        default_cutter._performance_curve_rates[curve_type] = self._performance_rates[curve_type]
+
+        return [default_cutter] + self._cut_functions

@@ -25,75 +25,47 @@ class ClassificationPlotter(Plotter):
         return super().load_csv(file, database, cut_functions, target)
 
 
-    def apply_rates_to_plot(self, axs, model, cut, xs, ys, is_bg, horizontal, annotate):
-
-        # Get position # TODO: This is a mess
-        pos_dict = {False: {False: [0.66, 0.82], True: [0.1, 0.82]}, True: {False: [0.73, 0.87], True: [0.73, 0.37]}}
-        pos = pos_dict[horizontal][is_bg]
-
-        # Reverse cut if background and remove math mode
-        cut, label = (1-cut, self._background_label) if is_bg else (cut, self._target_label)
-        label = label[1:-1]
-
-        # Add cut line
-        for ax in axs:
-            if not horizontal:
-                ax.axvline(cut, c=self._color_dict['annotate'], zorder=3, **self._style_dict['annotate'])
-            else:
-                ax.axhline(cut, c=self._color_dict['annotate'], zorder=3, **self._style_dict['annotate'])
-
-        if annotate:
-            # Add text to plot
-            text = []
-            for x, y, title in zip(xs, ys, [r'Cut$_{%s} = %.3f$' % (label, cut), (model._cut_functions[-1]._name)]):
-                text.append(title)
-                text.append(r'TPR$_{%s} = %.2f$' % (label, y*100) + '%')
-                text.append(r'FPR$_{%s} = %.2f$' % (label, x*100) + '%')
-
-            textstr = '\n'.join(tuple(text))
-            props = dict(boxstyle='square', facecolor='white', alpha=0.8, edgecolor='lightgray', pad=0.5)
-            axs[0].text(pos[0], pos[1], textstr, transform=axs[0].transAxes, fontsize=12, va='top', bbox=props)
-
-
     def add_rate_info(self, axs, model, horizontal=False, annotate=True, plot_sig=True, plot_bg=True):
         
-        # Loop over signal/background
         for model, is_bg, plot in zip([model, model.get_background_model()], [False, True], [plot_sig, plot_bg]):
             if plot:
                 if model._target_rates is not None:
 
-                    # Get threshold, fpr and tpr closest to target rate
-                    rate = model._target_rates[-1]
+                    # TODO: ROC OR PRC?
+                    model.calculate_target_rates('ROC')
 
-                    fpr, tpr, thresholds = roc_curve(model._truths, model._predictions)
-                    diffs = abs(fpr - (1-rate))
-                    idx = np.argmin(diffs)
-                    ifpr, itpr, ithreshold = fpr[idx], tpr[idx], thresholds[idx]
+                    # Get position # TODO: This is a mess
+                    pos_dict = {False: {False: [0.66, 0.82], True: [0.1, 0.82]}, True: {False: [0.73, 0.87], True: [0.73, 0.37]}}
+                    pos = pos_dict[horizontal][is_bg]
 
-                    # Add rates adjusted for data cut TODO: I think this might be a little bit wrong, since the distribution pre/post cut are different
-                    ratio = len(model._truths)/len(model._original_truths)
-                    if ratio < 1 and self._show_cuts:
-                        fprs, tprs = [ifpr, ifpr*ratio], [itpr, itpr*ratio]
-                    else:
-                        fprs, tprs = [ifpr], [itpr]
+                    # Reverse cut if background and remove math mode
+                    label = self._background_label if is_bg else self._target_label
+                    label = label[1:-1]
 
-                    self.apply_rates_to_plot(axs, model, ithreshold, fprs, tprs, is_bg, horizontal, annotate)
+                    # Add cut line for the correct curve type
+                    threshold = model._performance_rates['ROC'][0][2]
+                    if is_bg:
+                        threshold = 1-threshold
+                    for ax in axs:
+                        if not horizontal:
+                            ax.axvline(threshold, c=self._color_dict['annotate'], zorder=3, **self._style_dict['annotate'])
+                        else:
+                            ax.axhline(threshold, c=self._color_dict['annotate'], zorder=3, **self._style_dict['annotate'])
 
-                if model._target_cuts is not None:
-                    cut = model._target_cuts[-1]
-                    fprs, tprs = [], []
+                    if annotate:
+                        # Add text to plot
+                        text = []
+                        for function in model.get_performance_iterator(label, is_bg):
+                        #for x, y, title in zip(xs, ys, [r'Cut$_{%s} = %.3f$' % (label, cut), (model._cut_functions[-1]._name)]):
+                            if function._checkpoint:
+                                rate_info = function.get_performance_rates('ROC')
+                                text.append(function._name)
+                                text.append(r'TPR$_{%s} = %.2f$' % (label, rate_info[1]*100) + '%')
+                                text.append(r'FPR$_{%s} = %.2f$' % (label, rate_info[0]*100) + '%')
 
-                    # Loop over with/without data cut if applicable
-                    for truths, no_cut in [(model._truths, True), (model._original_truths, False)]: # TODO: Maybe cut this loop?
-                        if no_cut or (len(truths) > len(model._truths) and self._show_cuts):
-
-                            # Get signal and background before and after all cuts
-                            ones = model._predictions[np.where(model._truths == 1)]
-                            zeros = model._predictions[np.where(model._truths == 0)]
-                            tprs.append(np.count_nonzero(ones>cut)/np.count_nonzero(truths == 1))
-                            fprs.append(np.count_nonzero(zeros>cut)/np.count_nonzero(truths == 0))
-
-                    self.apply_rates_to_plot(axs, model, cut, fprs, tprs, is_bg, horizontal, annotate)
+                        textstr = '\n'.join(tuple(text))
+                        props = dict(boxstyle='square', facecolor='white', alpha=0.8, edgecolor='lightgray', pad=0.5)
+                        axs[0].text(pos[0], pos[1], textstr, transform=axs[0].transAxes, fontsize=12, va='top', bbox=props)
 
 
     def plot_score_hist(self, model_names=None, benchmark_names=None, n_bins=100, shift_x=False):
@@ -154,7 +126,7 @@ class ClassificationPlotter(Plotter):
     def plot_performance_curve(self, curve_type='ROC', model_names=None, benchmark_names=None, log_x=False, get_background=False):
 
         # Get curve type and label configuration
-        metric_function, metric_score, x_label, y_label, add_rates = curve_config_dict[curve_type]
+        _, _, x_label, y_label, _, add_rates = curve_config_dict[curve_type]
         target, title = (self._target_label, curve_type) if not get_background else (self._background_label, curve_type+'_BG')
 
         # Add the correct models and benchmarks if not supplied
@@ -177,12 +149,12 @@ class ClassificationPlotter(Plotter):
                 # Add data to plot
                 for ax in axs:
 
-                    # Get ROC/PR curve and auc score and plot
-                    x_rate, y_rate, thresholds = metric_function(model._truths, model._predictions)
-                    auc = metric_score(model._truths, model._predictions)
+                    # add_rates(axs, x_rate, y_rate, thresholds, model)
+                    x_rate, y_rate, _, auc = model.get_performance_curve(curve_type)
                     ax.plot(x_rate, y_rate, color=model._color, label=model._label + ' - AUC = %.6s'%auc, linestyle='solid')
 
-                add_rates(axs, x_rate, y_rate, thresholds, model)
+                model.calculate_target_rates(curve_type)
+                add_rates(axs, model)
 
         # Add plot style and info
         for ax in axs:

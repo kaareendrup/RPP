@@ -22,29 +22,50 @@ interaction_type_dict = {
     'nc': 2,
 }
 
-class interaction_type_cutter:
+
+class Cutter():
+
+    def __init__(self, name, checkpoint=False):
+
+        self._name = name
+        self._checkpoint = checkpoint
+        self._performance_curve_rates = {'ROC': None, 'PRC': None}
+
+
+    def get_performance_rates(self, curve_type, index=0):
+        return self._performance_curve_rates[curve_type][index]
+    
+
+class InteractionTypeCutter(Cutter):
 
     def __init__(self, interaction_type):
+
+        super().__init__(interaction_type)
         self._interaction_type = interaction_type
-        self._name = interaction_type
+
 
     def cut(self, event_nos, database):
+
         type_query = 'SELECT event_no, interaction_type FROM truth WHERE event_no IN {}'.format(tuple(event_nos))
         type_data = query_database(database, type_query)
         
         type_data.drop(type_data[type_data['interaction_type'] != interaction_type_dict[self._interaction_type]].index, inplace=True)
         return type_data['event_no']
 
-get_cc = interaction_type_cutter('cc')
-get_nc = interaction_type_cutter('nc')
+
+get_cc = InteractionTypeCutter('cc')
+get_nc = InteractionTypeCutter('nc')
 
 
-class CLSC_cutter:
+class CLSCCutter(Cutter):
 
     def __init__(self):
-        self._name = 'CLSC'
+
+        super().__init__('CLSC', True)
+
 
     def cut(self, event_nos, database):
+
         # Return ratio of nllh
         pred_query = 'select event_no, fqe_ekin, fqmu_ekin, fqe_nll, fqmu_nll, fqe_dw, fqe_dwd, fqmu_dw, fqmu_dwd, fq_q FROM fiTQun WHERE event_no IN {}'.format(tuple(event_nos))
         pred_data = query_database(database, pred_query)
@@ -61,17 +82,19 @@ class CLSC_cutter:
 
         return pred_data['event_no'].to_numpy()
 
-CLSC_cut = CLSC_cutter()
+
+CLSC_cut = CLSCCutter()
 
 
-class pion_cutter:
+class PionCutter(Cutter):
 
     def __init__(self, has_pions=False):
-        if has_pions:
-            self._name = 'no_pions'
-        else:
-            self._name = 'has_pions'
+
+        name = 'has_pions' if has_pions else 'no_pions'
+
+        super().__init__(name)
         self._has_pions = has_pions
+
 
     def cut(self, event_nos, database):
 
@@ -85,5 +108,6 @@ class pion_cutter:
         
         return type_data['event_no']
     
-has_pions_cut = pion_cutter(has_pions=True)
-no_pions_cut = pion_cutter(has_pions=False)
+
+has_pions_cut = PionCutter(has_pions=True)
+no_pions_cut = PionCutter(has_pions=False)

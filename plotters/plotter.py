@@ -53,11 +53,16 @@ class Plotter:
         
         # Get energy and position data
         if database is not None:
-            features_query = 'SELECT fLE, fVx, fVy, fVz, event_no FROM truth WHERE event_no IN {}'.format(tuple(event_nos))
-            features = query_database(database, features_query)
-            features.sort_values('event_no', inplace=True, ignore_index=True)
-            energy = features['fLE'].to_numpy()
-            lepton_pos = features[['fVx', 'fVy', 'fVz']].to_numpy()
+            try:
+                features_query = 'SELECT fLE, fVx, fVy, fVz, event_no FROM truth WHERE event_no IN {}'.format(tuple(event_nos))
+                features = query_database(database, features_query)
+                features.sort_values('event_no', inplace=True, ignore_index=True)
+                energy = features['fLE'].to_numpy()
+                lepton_pos = features[['fVx', 'fVy', 'fVz']].to_numpy()
+            except:
+                print('No values extracted from database')
+                energy=None
+                lepton_pos=None
         else:
             print('No database specified, no energy and position extracted')
             energy = None
@@ -74,9 +79,7 @@ class Plotter:
 
         # Load data from csv
         preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(results_file, database_file, cut_functions, **kwargs)
-        # if reverse:
-        #     preds, truths, original_truths = 1-preds, 1-truths, 1-original_truths
-
+       
         # Define model parameters and append to list
         model = self._model_class(
             model_name,
