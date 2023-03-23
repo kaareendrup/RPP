@@ -288,11 +288,13 @@ class ClassificationPlotter(Plotter):
             plt.close()
 
 
-    def plot_score_by_position(self, model_names=None, benchmark_names=None, thresholds='inherit'):
+    def plot_score_by_position(self, model_names=None, benchmark_names=None, thresholds=None):
 
-        # TODO: Implement threshold inheritance
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
+
+        if thresholds == None:
+            thresholds = [None]*(len(models)+len(benchmarks))
 
         # Loop over models with the respective cuts
         for model, cuts in zip(models + benchmarks, thresholds):
@@ -310,6 +312,9 @@ class ClassificationPlotter(Plotter):
                 )
 
             # Get true, false and discarded rates
+            if cuts is None:
+                cuts = [model._performance_rates[model._target_curve_type][0][2], model.get_background_model()._performance_rates[model._target_curve_type][0][2]]
+
             pos_target_true = model._lepton_pos[np.where((model._truths == 1) & (model._predictions > cuts[0]))]
             pos_target_false = model._lepton_pos[np.where((model._truths == 1) & (model._predictions < cuts[1]))]
             pos_background_true = model._lepton_pos[np.where((model._truths == 0) & (model._predictions < cuts[1]))]
@@ -343,24 +348,23 @@ class ClassificationPlotter(Plotter):
             plt.close()
 
 
-    def plot_score_ratio_by_distance(self, model_names=None, benchmark_names=None, thresholds='inherit', bins=20):
+    def plot_score_ratio_by_distance(self, model_names=None, benchmark_names=None, thresholds=None, bins=20, range=None):
 
-        # TODO: Implement threshold inheritance
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
 
-        if thresholds != 'inherit':
-            thresholds = np.array(thresholds).reshape(len(models), -1, 2)
-        if len(bins) == 2:
-            bins = np.linspace(bins[0], bins[1], 21)
+        if thresholds == None:
+            thresholds = [[None]*2]*len(models)
+        else:
+            thresholds = np.array(thresholds).reshape(len(models), 2, 2)
 
         # Loop over models with the respective cuts
         for model, benchmark, cuts_list in zip(models, benchmarks, thresholds):
             if model._lepton_pos is None:
-                print("{}: No benchmark found. Skipping.".format(model._name))
+                print("{}: No position found. Skipping.".format(model._name))
                 continue
             if benchmark is None:
-                print("{}: No position found. Skipping.".format(model._name))
+                print("{}: No benchmark found. Skipping.".format(model._name))
                 continue
 
             else:
@@ -374,6 +378,9 @@ class ClassificationPlotter(Plotter):
                 for m, axs, cuts in zip([model, benchmark], axses.T, cuts_list):
 
                     # Get true and false rates
+                    if cuts is None:
+                        cuts = [m._performance_rates[m._target_curve_type][0][2], m.get_background_model()._performance_rates[m._target_curve_type][0][2]]
+
                     pos_target_true = m._lepton_pos[np.where((m._truths == 1) & (m._predictions > cuts[0]))]
                     pos_target_false = m._lepton_pos[np.where((m._truths == 1) & (m._predictions < cuts[1]))]
                     pos_background_true = m._lepton_pos[np.where((m._truths == 0) & (m._predictions < cuts[1]))]
@@ -388,7 +395,7 @@ class ClassificationPlotter(Plotter):
                         radii_true = np.sqrt( positions[0][:,0]**2 + positions[0][:,1]**2 )
                         radii_false = np.sqrt( positions[1][:,0]**2 + positions[1][:,1]**2 )
 
-                        counts_true, bins_true = np.histogram(radii_true, bins=bins)
+                        counts_true, bins_true = np.histogram(radii_true, bins=bins, range=range)
                         counts_false, _ = np.histogram(radii_false, bins=bins_true)
 
                         axs[0].stairs(counts_true, bins_true, color=colors[0], label=labels[0])
