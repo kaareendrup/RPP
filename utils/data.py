@@ -49,10 +49,6 @@ class InteractionTypeCutter(Cutter):
         return type_data['event_no']
 
 
-get_cc = InteractionTypeCutter('cc')
-get_nc = InteractionTypeCutter('nc')
-
-
 class CLSCCutter(Cutter):
 
     def __init__(self):
@@ -77,10 +73,7 @@ class CLSCCutter(Cutter):
         pred_data.drop(pred_data[pred_data['fqnom_dwd']<=250].index, inplace=True)
 
         return pred_data['event_no'].to_numpy()
-
-
-CLSC_cut = CLSCCutter()
-
+    
 
 class PionCutter(Cutter):
 
@@ -103,7 +96,3 @@ class PionCutter(Cutter):
             type_data.drop(type_data[type_data['fNpions'] != 0].index, inplace=True)
         
         return type_data['event_no']
-    
-
-has_pions_cut = PionCutter(has_pions=True)
-no_pions_cut = PionCutter(has_pions=False)
