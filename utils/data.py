@@ -29,12 +29,8 @@ class Cutter():
 
         self._name = name
         self._checkpoint = checkpoint
-        self._performance_curve_rates = {'ROC': None, 'PRC': None}
+        self._performance_rates = None
 
-
-    def get_performance_rates(self, curve_type, index=0):
-        return self._performance_curve_rates[curve_type][index]
-    
 
 class InteractionTypeCutter(Cutter):
 

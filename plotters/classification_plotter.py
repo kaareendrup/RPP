@@ -27,44 +27,37 @@ class ClassificationPlotter(Plotter):
     def add_rate_info(self, axs, model, horizontal=False, annotate=True, plot_sig=True, plot_bg=True):
         
         for model, is_bg, plot in zip([model, model.get_background_model()], [False, True], [plot_sig, plot_bg]):
-            if plot:
-                if model._target_rates is not None:
+            if (model._target_rates is not None or model._target_cuts is not None) and plot:
 
-                    # TODO: ROC OR PRC?
-                    model.calculate_target_rates('ROC')
+                model.calculate_target_rates()
+                threshold = model._performance_rates[model._target_curve_type][0][2]
 
-                    # Get position # TODO: This is a mess
-                    pos_dict = {False: {False: [0.66, 0.82], True: [0.1, 0.82]}, True: {False: [0.73, 0.87], True: [0.73, 0.37]}}
-                    pos = pos_dict[horizontal][is_bg]
+                # Get position # TODO: This is a mess
+                pos_dict = {False: {False: [0.66, 0.82], True: [0.1, 0.82]}, True: {False: [0.73, 0.87], True: [0.73, 0.37]}}
+                pos = pos_dict[horizontal][is_bg]
 
-                    # Reverse cut if background and remove math mode
-                    label = self._background_label if is_bg else self._target_label
-                    label = label[1:-1]
+                # Reverse threshold if background, get correct label and remove math mode
+                label, threshold = (self._background_label[1:-1], 1-threshold) if is_bg else (self._target_label[1:-1], threshold)
 
-                    # Add cut line for the correct curve type
-                    threshold = model._performance_rates['ROC'][0][2]
-                    if is_bg:
-                        threshold = 1-threshold
-                    for ax in axs:
-                        if not horizontal:
-                            ax.axvline(threshold, c=self._color_dict['annotate'], zorder=3, **self._style_dict['annotate'])
-                        else:
-                            ax.axhline(threshold, c=self._color_dict['annotate'], zorder=3, **self._style_dict['annotate'])
+                # Add cut line for the correct curve type
+                for ax in axs:
+                    if not horizontal:
+                        ax.axvline(threshold, c=self._color_dict['annotate'], zorder=3, **self._style_dict['annotate'])
+                    else:
+                        ax.axhline(threshold, c=self._color_dict['annotate'], zorder=3, **self._style_dict['annotate'])
 
-                    if annotate:
-                        # Add text to plot
-                        text = []
-                        for function in model.get_performance_iterator(label, is_bg):
-                        #for x, y, title in zip(xs, ys, [r'Cut$_{%s} = %.3f$' % (label, cut), (model._cut_functions[-1]._name)]):
-                            if function._checkpoint:
-                                rate_info = function.get_performance_rates('ROC')
-                                text.append(function._name)
-                                text.append(r'TPR$_{%s} = %.2f$' % (label, rate_info[1]*100) + '%')
-                                text.append(r'FPR$_{%s} = %.2f$' % (label, rate_info[0]*100) + '%')
+                if annotate:
+                    # Add text to plot
+                    text = []
+                    for function in model.get_performance_iterator(label, is_bg):
+                        if function._checkpoint:
+                            text.append(function._name)
+                            text.append(r'TPR$_{%s} = %.2f$' % (label, function._performance_rates[1]*100) + '%')
+                            text.append(r'FPR$_{%s} = %.2f$' % (label, function._performance_rates[0]*100) + '%')
 
-                        textstr = '\n'.join(tuple(text))
-                        props = dict(boxstyle='square', facecolor='white', alpha=0.8, edgecolor='lightgray', pad=0.5)
-                        axs[0].text(pos[0], pos[1], textstr, transform=axs[0].transAxes, fontsize=12, va='top', bbox=props)
+                    textstr = '\n'.join(tuple(text))
+                    props = dict(boxstyle='square', facecolor='white', alpha=0.8, edgecolor='lightgray', pad=0.5)
+                    axs[0].text(pos[0], pos[1], textstr, transform=axs[0].transAxes, fontsize=12, va='top', bbox=props)
 
 
     def plot_score_hist(self, model_names=None, benchmark_names=None, n_bins=100, shift_x=False):
@@ -327,6 +320,7 @@ class ClassificationPlotter(Plotter):
 
             # Plot            
             for axs, position, label, color in zip(axses.T, positions, labels, self._color_dict['particles']):
+
                 # Get correct opacity for plotting
                 alpha = calculate_alpha(position)
 

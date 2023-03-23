@@ -96,9 +96,11 @@ def get_rates(x, y, thresholds, target_rates, target_cuts, curve_type='ROC'):
     return rates_list
 
 
-def add_rates(axs, model, curve_type='ROC'):
+def add_rates(axs, model, curve_type=None):
 
-    for (i_x, i_y, ithreshold) in model._performance_rates['ROC']:
+    curve_type = model._target_curve_type if curve_type is None else curve_type
+
+    for (i_x, i_y, ithreshold) in model._performance_rates[curve_type]:
         axs[-1].scatter(i_x, i_y, color='k', s=10, zorder=3)
         
         if curve_type=='ROC':
