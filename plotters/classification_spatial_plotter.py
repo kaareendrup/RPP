@@ -5,14 +5,14 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from RPP.plotters.classification_plotter import ClassificationPlotter
 from RPP.utils.data import query_database
-from RPP.utils.utils import basic_colormap, dark_colormap, basic_color_dict, basic_style_dict
+from RPP.utils.style import dark_colormap
 from RPP.utils.maths.maths import rotate_polar_mean
 
 
 class ClassificationSpatialPlotter(ClassificationPlotter):
 
-    def __init__(self, name, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap, darkmap=dark_colormap, show_cuts=True, k=0.1, random_seed=42):
-        super().__init__(name, plot_dir, target, background, color_dict, style_dict, cmap, show_cuts)
+    def __init__(self, name, plot_dir, target, background, darkmap=dark_colormap, k=0.1, random_seed=42, **kwargs):
+        super().__init__(name, plot_dir, target, background, **kwargs)
 
         self._darkmap=darkmap
         self._k = k

@@ -1,14 +1,14 @@
 import pandas as pd
 
-from RPP.utils.utils import make_plot_dir, fiTQun_dict, beautify_label
 from RPP.utils.fiTQun_schemes import pred_pure
 from RPP.utils.data import query_database
 from RPP.data.models import Model
-
+from RPP.utils.utils import make_plot_dir, fiTQun_dict, beautify_label
+from RPP.utils.style import basic_colormap, basic_color_dict, basic_style_dict
 
 class Plotter:
 
-    def __init__(self, name, plot_dir, target, color_dict, style_dict, cmap):
+    def __init__(self, name, plot_dir, target, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap):
 
         # Member variables # TODO: Create common string that is prepended to plot names
         self._model_class = Model

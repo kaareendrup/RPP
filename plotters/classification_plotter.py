@@ -4,18 +4,19 @@ import matplotlib.pyplot as plt
 
 from RPP.plotters.plotter import Plotter
 from RPP.data.models import ClassificationModel
-from RPP.utils.utils import basic_colormap, basic_color_dict, basic_style_dict, curve_config_dict, calculate_alpha, beautify_label, add_rates
-
+from RPP.utils.utils import calculate_alpha, beautify_label, add_rates, curve_config_dict
+from RPP.utils.style import basic_pos_dict
 
 class ClassificationPlotter(Plotter):
 
-    def __init__(self, name, plot_dir, target, background, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap, show_cuts=True):
-        super().__init__(name, plot_dir, target, color_dict, style_dict, cmap)
+    def __init__(self, name, plot_dir, target, background, pos_dict=basic_pos_dict, show_cuts=True, **kwargs):
+        super().__init__(name, plot_dir, target, **kwargs)
 
         self._model_class = ClassificationModel
         self._background = background
         self._background_label = beautify_label(background)
         self._show_cuts = show_cuts
+        self._pos_dict = pos_dict
 
 
     def load_csv(self, file, database=None, cut_functions=None, target=None, reverse=False, **kwargs):
@@ -29,12 +30,12 @@ class ClassificationPlotter(Plotter):
         for model, is_bg, plot in zip([model, model.get_background_model()], [False, True], [plot_sig, plot_bg]):
             if (model._target_rates is not None or model._target_cuts is not None) and plot:
 
+                # Get rate data
                 model.calculate_target_rates()
                 threshold = model._performance_rates[model._target_curve_type][0][2]
 
-                # Get position # TODO: This is a mess
-                pos_dict = {False: {False: [0.66, 0.82], True: [0.1, 0.82]}, True: {False: [0.73, 0.87], True: [0.73, 0.37]}}
-                pos = pos_dict[horizontal][is_bg]
+                # Get position
+                pos = self._pos_dict[horizontal][is_bg]
 
                 # Reverse threshold if background, get correct label and remove math mode
                 label, threshold = (self._background_label[1:-1], 1-threshold) if is_bg else (self._target_label[1:-1], threshold)
@@ -46,8 +47,8 @@ class ClassificationPlotter(Plotter):
                     else:
                         ax.axhline(threshold, c=self._color_dict['annotate'], zorder=3, **self._style_dict['annotate'])
 
+                # Add text to plot
                 if annotate:
-                    # Add text to plot
                     text = []
                     for function in model.get_performance_iterator(label, is_bg):
                         if function._checkpoint:
