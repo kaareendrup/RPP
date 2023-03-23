@@ -176,49 +176,49 @@ class ClassificationPlotter(Plotter):
         for model, benchmark in zip(models, benchmarks):
 
             _, axs = plt.subplots(
-                    1, 2, 
-                    figsize=(18,7), 
-                    gridspec_kw={'wspace': .3, 'width_ratios': [1,1]}
+                    1, 1+(benchmark is not None), 
+                    figsize=(9*(1+(benchmark is not None)),7), 
+                    gridspec_kw={'wspace': .3},
+                    squeeze=False
                 )
 
             # Loop over models and add data to plot
-            for m, ax in zip([model, benchmark], axs):
-                if m is not None:
-                    if m._energy is None:
-                        print("{}: No energy found. Skipping.".format(m._name))
-                        continue
+            for m, ax in zip([model, benchmark], axs[:,0]):
+                if m._energy is None:
+                    print("{}: No energy found. Skipping.".format(m._name))
+                    continue
 
-                    m_ones = m._predictions[np.where(m._truths == 1)]
-                    m_zeros = m._predictions[np.where(m._truths == 0)]
-                    e_ones = m._energy[np.where(m._truths == 1)]
-                    e_zeros = m._energy[np.where(m._truths == 0)]
+                m_ones = m._predictions[np.where(m._truths == 1)]
+                m_zeros = m._predictions[np.where(m._truths == 0)]
+                e_ones = m._energy[np.where(m._truths == 1)]
+                e_zeros = m._energy[np.where(m._truths == 0)]
 
-                    # Get correct opacity for plotting
-                    alpha = calculate_alpha(m._predictions)
+                # Get correct opacity for plotting
+                alpha = calculate_alpha(m._predictions)
 
-                    ax.scatter(e_ones, m_ones, color=m._color, marker='.', alpha=alpha, label=self._target_label +r' '+ m._label)
-                    ax.scatter(e_zeros, m_zeros, color='k', marker='.', alpha=alpha, label=self._background_label +r' '+ m._label)
+                ax.scatter(e_ones, m_ones, color=m._color, marker='.', alpha=alpha, label=self._target_label +r' '+ m._label)
+                ax.scatter(e_zeros, m_zeros, color='k', marker='.', alpha=alpha, label=self._background_label +r' '+ m._label)
 
-                    # Force different y-axis if the data has outliers
-                    if shift_y:
-                        ymax = max([np.percentile(m_ones, 99.9), np.percentile(m_zeros, 99.9)])
-                        ymin = min([np.percentile(m_ones, .1), np.percentile(m_zeros, .1)])
-                        ymean = (np.mean(m_ones)+np.mean(m_zeros))/2
-                        dist = max([ymax-ymean, ymean-ymin])
-                        ax.set_ylim(ymean-dist*1.1, ymean+dist*1.1)
+                # Force different y-axis if the data has outliers
+                if shift_y:
+                    ymax = max([np.percentile(m_ones, 99.9), np.percentile(m_zeros, 99.9)])
+                    ymin = min([np.percentile(m_ones, .1), np.percentile(m_zeros, .1)])
+                    ymean = (np.mean(m_ones)+np.mean(m_zeros))/2
+                    dist = max([ymax-ymean, ymean-ymin])
+                    ax.set_ylim(ymean-dist*1.1, ymean+dist*1.1)
 
-                    # Add rate info to plot
-                    self.add_rate_info([ax], m, horizontal=True)
+                # Add rate info to plot
+                self.add_rate_info([ax], m, horizontal=True)
 
-                    # Decorate plot
-                    ax.set_axisbelow(True)
-                    ax.grid(linestyle='dotted')
-                    ax.set_xlabel('Energy [MeV]', fontsize=12)
-                    ax.set_ylabel('Model score', fontsize=12)
-                    ax.set_title('Distribution of model score by lepton energy', fontsize=16)
-                    leg = ax.legend(fontsize=12, loc='upper center', bbox_to_anchor=[.5,.90], markerscale=2)
-                    for lh in leg.legendHandles: 
-                        lh.set_alpha(1)
+                # Decorate plot
+                ax.set_axisbelow(True)
+                ax.grid(linestyle='dotted')
+                ax.set_xlabel('Energy [MeV]', fontsize=12)
+                ax.set_ylabel('Model score', fontsize=12)
+                ax.set_title('Distribution of model score by lepton energy', fontsize=16)
+                leg = ax.legend(fontsize=12, loc='upper center', bbox_to_anchor=[.5,.90], markerscale=2)
+                for lh in leg.legendHandles: 
+                    lh.set_alpha(1)
 
             plt.savefig(self._plot_dir + model._title + "_energy_score.png")
             plt.close()
@@ -239,7 +239,7 @@ class ClassificationPlotter(Plotter):
             _, axs = plt.subplots(
                     1, 2, 
                     figsize=(18,7), 
-                    gridspec_kw={'wspace': .3, 'width_ratios': [1,1]}
+                    gridspec_kw={'wspace': .3}
                 )
 
             m_ones = model._predictions[np.where(model._truths == 1)]
@@ -308,7 +308,7 @@ class ClassificationPlotter(Plotter):
             fig, axses = plt.subplots(
                     2, 5, 
                     figsize=(24,9), 
-                    gridspec_kw={'wspace': .3, 'hspace': .3, 'height_ratios': [1,1]}
+                    gridspec_kw={'wspace': .3, 'hspace': .3}
                 )
 
             # Get true, false and discarded rates
@@ -363,16 +363,14 @@ class ClassificationPlotter(Plotter):
             if model._lepton_pos is None:
                 print("{}: No position found. Skipping.".format(model._name))
                 continue
-            if benchmark is None:
-                print("{}: No benchmark found. Skipping.".format(model._name))
-                continue
 
             else:
                 _, axses = plt.subplots(
-                        2, 2, 
+                        2, 1+(benchmark is not None), 
                         sharex=True,
-                        figsize=(24,9), 
-                        gridspec_kw={'wspace': .3, 'hspace': .05, 'height_ratios': [3,1]}
+                        figsize=(9*(1+(benchmark is not None)),8), 
+                        gridspec_kw={'wspace': .3, 'hspace': .05, 'height_ratios': [3,1]},
+                        squeeze=False
                     )
 
                 for m, axs, cuts in zip([model, benchmark], axses.T, cuts_list):
