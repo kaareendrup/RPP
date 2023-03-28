@@ -175,15 +175,15 @@ class ClassificationPlotter(Plotter):
 
         for model, benchmark in zip(models, benchmarks):
 
-            _, axs = plt.subplots(
+            _, (axs,) = plt.subplots(
                     1, 1+(benchmark is not None), 
-                    figsize=(9*(1+(benchmark is not None)),7), 
+                    figsize=(9*(1+(benchmark is not None)), 7), 
                     gridspec_kw={'wspace': .3},
                     squeeze=False
                 )
 
             # Loop over models and add data to plot
-            for m, ax in zip([model, benchmark], axs[:,0]):
+            for m, ax in zip([model, benchmark], axs):
                 if m._energy is None:
                     print("{}: No energy found. Skipping.".format(m._name))
                     continue
