@@ -108,7 +108,7 @@ class ClassificationPlotter(Plotter):
                 # Decorate plot
                 axs[0].legend(fontsize=12, loc=(0.085, 0.85))
 
-                plt.savefig(self._plot_dir + model_list[0]._title + "_clfhist.png")
+                plt.savefig(self._plot_dir + models[0]._title + "_clfhist_" + model_list[0]._title + ".png")
                 plt.close()
 
 
@@ -316,18 +316,18 @@ class ClassificationPlotter(Plotter):
                 axs[0].scatter(position[:,0], position[:,1], color=color, label=label, marker='.', alpha=alpha)
                 axs[1].scatter(position[:,0], position[:,2], color=color, label=label, marker='.', alpha=alpha)
 
-                axs[0].set_xlabel('x (cm)', fontsize=12)
-                axs[0].set_ylabel('y (cm)', fontsize=12)
-                axs[1].set_xlabel('x (cm)', fontsize=12)
-                axs[1].set_ylabel('z (cm)', fontsize=12)
+                axs[1].set_xlabel('x [cm]', fontsize=12)
 
                 leg = axs[0].legend()
                 for lh in leg.legendHandles: 
                     lh.set_alpha(1)
 
+            axses[0,0].set_ylabel('y [cm]', fontsize=12)
+            axses[0,1].set_ylabel('z [cm]', fontsize=12)
+
             fig.suptitle('Event position distributions', fontsize=16)
 
-            plt.savefig(self._plot_dir + model._title + "_scores_by_position.png")
+            plt.savefig(self._plot_dir + models[0]._title + "_scores_by_position_ " + model._title + ".png")
             plt.close()
 
 
@@ -395,7 +395,7 @@ class ClassificationPlotter(Plotter):
 
                     axs[1].set_ylim(0)
                     axs[1].grid(linestyle='dotted')
-                    axs[1].set_xlabel('R (cm)', fontsize=12)
+                    axs[1].set_xlabel('R [cm]', fontsize=12)
                     axs[1].legend(fontsize=12)
                     
                 axses[0,0].set_ylabel('Counts', fontsize=12)
