@@ -14,6 +14,25 @@ def make_plot_dir(name, target, dir):
     return plot_dir
 
 
+def beautify_label(label):
+
+    l = list(label)
+    for i, c in enumerate(l):
+        if c == 'v':
+            if i == 0:
+                if not l[i+1].isalnum():
+                    l[i] = r'\nu'
+            elif i == len(l)-1:
+                if not l[i-1].isalnum():
+                    l[i] = r'\nu'
+            else:
+                if not l[i-1].isalnum() and not l[i+1].isalnum():
+                    l[i] = r'\nu'
+                    
+    label = "".join(l)
+    return r'$%s$' % (label)
+
+
 fiTQun_dict = {
     'v_u': 'fqmu_nll',
     'v_e': 'fqe_nll',
@@ -103,20 +122,17 @@ def calculate_alpha(data):
     return alpha
 
 
-def beautify_label(label):
+def shift_axis(ax, a, b, shift_x=False, shift_y=False):
 
-    l = list(label)
-    for i, c in enumerate(l):
-        if c == 'v':
-            if i == 0:
-                if not l[i+1].isalnum():
-                    l[i] = r'\nu'
-            elif i == len(l)-1:
-                if not l[i-1].isalnum():
-                    l[i] = r'\nu'
-            else:
-                if not l[i-1].isalnum() and not l[i+1].isalnum():
-                    l[i] = r'\nu'
-                    
-    label = "".join(l)
-    return r'$%s$' % (label)
+    ax_max = max([np.percentile(a, 99.9), np.percentile(b, 99.9)])
+    ax_min = min([np.percentile(a, .1), np.percentile(b, .1)])
+    ax_mean = (np.mean(a)+np.mean(b))/2
+    dist = max([ax_max-ax_mean, ax_mean-ax_min])
+    ax_min, ax_max = (0, 1) if abs(1-max(a)) < 1e-5 else (ax_mean-dist*1.1, ax_mean+dist*1.1)
+
+    if shift_x:
+        ax.set_xlim(ax_min, ax_max)
+    if shift_y:
+        ax.set_ylim(ax_min, ax_max)
+
+    return ax, ax_min, ax_max

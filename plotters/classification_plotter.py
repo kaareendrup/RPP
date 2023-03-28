@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 
 from RPP.plotters.plotter import Plotter
 from RPP.data.models import ClassificationModel
-from RPP.utils.utils import calculate_alpha, beautify_label, add_rates, curve_config_dict
+from RPP.utils.utils import calculate_alpha, beautify_label, add_rates, curve_config_dict, shift_axis
 from RPP.utils.style import basic_pos_dict
+
 
 class ClassificationPlotter(Plotter):
 
@@ -86,12 +87,12 @@ class ClassificationPlotter(Plotter):
                     for log, ax in zip([False, True], axs):
 
                         if shift_x:
-                            xmax = max([np.percentile(ones, 99.9), np.percentile(zeros, 99.9)])
-                            xmin = min([np.percentile(ones, .1), np.percentile(zeros, .1)])
-                            xmean = (np.mean(ones)+np.mean(zeros))/2
-                            dist = max([xmax-xmean, xmean-xmin])
-                            ax.set_xlim(xmean-dist*1.1, xmean+dist*1.1)
-                            xmin, xmax = (0, 1) if abs(1-max(model._predictions)) < 1e-5 else (xmean-dist*1.1, xmean+dist*1.1)
+                            # xmax = max([np.percentile(ones, 99.9), np.percentile(zeros, 99.9)])
+                            # xmin = min([np.percentile(ones, .1), np.percentile(zeros, .1)])
+                            # xmean = (np.mean(ones)+np.mean(zeros))/2
+                            # dist = max([xmax-xmean, xmean-xmin])
+                            # ax.set_xlim(xmean-dist*1.1, xmean+dist*1.1)
+                            ax, xmin, xmax = shift_axis(ax, ones, zeros, shift_x=True)
                             bins = np.linspace(xmin, xmax, n_bins)
                         else:
                             bins = n_bins
@@ -201,11 +202,7 @@ class ClassificationPlotter(Plotter):
 
                 # Force different y-axis if the data has outliers
                 if shift_y:
-                    ymax = max([np.percentile(m_ones, 99.9), np.percentile(m_zeros, 99.9)])
-                    ymin = min([np.percentile(m_ones, .1), np.percentile(m_zeros, .1)])
-                    ymean = (np.mean(m_ones)+np.mean(m_zeros))/2
-                    dist = max([ymax-ymean, ymean-ymin])
-                    ax.set_ylim(ymean-dist*1.1, ymean+dist*1.1)
+                    ax, _, _ = shift_axis(ax, m_ones, m_zeros, shift_y=True)
 
                 # Add rate info to plot
                 self.add_rate_info([ax], m, horizontal=True)
@@ -268,23 +265,13 @@ class ClassificationPlotter(Plotter):
                 
             axs[0].set_ylabel(model._label, fontsize=12)
 
-            # Force different y-axis if the data has outliers
-            if shift_axes:
-                b_max = max([np.percentile(b_ones, 99.9), np.percentile(b_zeros, 99.9)])
-                b_min = min([np.percentile(b_ones, .1), np.percentile(b_zeros, .1)])
-                b_mean = (np.mean(b_ones)+np.mean(b_zeros))/2
-                dist = max([b_max-b_mean, b_mean-b_min])
+            # Force shifted axes if the data has outliers
+            for ax in axs:
+                if shift_axes:
+                    ax, _, _ = shift_axis(ax, b_ones, b_zeros, shift_x=True)
+                    ax, _, _ = shift_axis(ax, m_ones, m_zeros, shift_y=True)
 
-                m_max = max([np.percentile(m_ones, 99.9), np.percentile(m_zeros, 99.9)])
-                m_min = min([np.percentile(m_ones, .1), np.percentile(m_zeros, .1)])
-                m_mean = (np.mean(m_ones)+np.mean(m_zeros))/2
-                dist = max([m_max-m_mean, m_mean-m_min])
-
-                for ax in axs:
-                    ax.set_xlim(b_mean-dist*1.1, b_mean+dist*1.1)
-                    ax.set_ylim(m_mean-dist*1.1, m_mean+dist*1.1)
-
-            plt.savefig(self._plot_dir + model._title + "_model_scores.png")
+            plt.savefig(self._plot_dir + model._title + "_model_scores.png")  
             plt.close()
 
 
@@ -404,6 +391,7 @@ class ClassificationPlotter(Plotter):
 
                         axs[1].plot(bin_centers, ratios, color=color_comp, marker='.', ls='dotted', label=labels[0])
 
+                    # Decorate plot
                     axs[0].grid(linestyle='dotted')
                     axs[0].legend(fontsize=12)
 
