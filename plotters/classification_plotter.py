@@ -296,6 +296,7 @@ class ClassificationPlotter(Plotter):
 
             # Get true, false and discarded rates
             if cuts is None:
+                model.calculate_target_rates()
                 cuts = [model._performance_rates[model._target_curve_type][0][2], model.get_background_model()._performance_rates[model._target_curve_type][0][2]]
 
             pos_target_true = model._lepton_pos[np.where((model._truths == 1) & (model._predictions > cuts[0]))]
@@ -318,12 +319,12 @@ class ClassificationPlotter(Plotter):
 
                 axs[1].set_xlabel('x [cm]', fontsize=12)
 
-                leg = axs[0].legend()
+                leg = axs[0].legend(loc='upper right')
                 for lh in leg.legendHandles: 
                     lh.set_alpha(1)
 
-            axses[0,0].set_ylabel('y [cm]', fontsize=12)
-            axses[0,1].set_ylabel('z [cm]', fontsize=12)
+            axses.T[0,0].set_ylabel('y [cm]', fontsize=12)
+            axses.T[0,1].set_ylabel('z [cm]', fontsize=12)
 
             fig.suptitle('Event position distributions', fontsize=16)
 
@@ -360,6 +361,7 @@ class ClassificationPlotter(Plotter):
 
                     # Get true and false rates
                     if cuts is None:
+                        model.calculate_target_rates()
                         cuts = [m._performance_rates[m._target_curve_type][0][2], m.get_background_model()._performance_rates[m._target_curve_type][0][2]]
 
                     pos_target_true = m._lepton_pos[np.where((m._truths == 1) & (m._predictions > cuts[0]))]

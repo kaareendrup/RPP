@@ -78,6 +78,9 @@ class ClassificationModel(Model):
             background_model._target_cuts = background_model._bg_cuts
             background_model._bg_cuts = background_model._target_cuts
 
+            if self._performance_rates[self._target_curve_type] is not None:
+                background_model.calculate_target_rates()
+
             self._background_model = background_model
 
         return self._background_model
