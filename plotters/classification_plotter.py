@@ -87,11 +87,6 @@ class ClassificationPlotter(Plotter):
                     for log, ax in zip([False, True], axs):
 
                         if shift_x:
-                            # xmax = max([np.percentile(ones, 99.9), np.percentile(zeros, 99.9)])
-                            # xmin = min([np.percentile(ones, .1), np.percentile(zeros, .1)])
-                            # xmean = (np.mean(ones)+np.mean(zeros))/2
-                            # dist = max([xmax-xmean, xmean-xmin])
-                            # ax.set_xlim(xmean-dist*1.1, xmean+dist*1.1)
                             ax, xmin, xmax = shift_axis(ax, ones, zeros, shift_x=True)
                             bins = np.linspace(xmin, xmax, n_bins)
                         else:
