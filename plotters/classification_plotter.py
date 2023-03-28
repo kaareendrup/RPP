@@ -141,8 +141,9 @@ class ClassificationPlotter(Plotter):
                     x_rate, y_rate, _, auc = model.get_performance_curve(curve_type)
                     ax.plot(x_rate, y_rate, color=model._color, label=model._label + ' - AUC = %.6s'%auc, linestyle='solid')
 
-                model.calculate_target_rates(curve_type)
-                add_rates(axs, model, curve_type)
+                if model._target_rates is not None:
+                    model.calculate_target_rates(curve_type)
+                    add_rates(axs, model, curve_type)
 
         # Add plot style and info
         for ax in axs:
