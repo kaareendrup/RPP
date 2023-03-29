@@ -9,10 +9,15 @@ def query_database(file, query):
     # Get truth and predictions from sqlite database
     with sqlite3.connect(file) as con:
 
-        print('Querying database..')
-        pred_data = pd.read_sql(query, con)
-        pred_data.sort_values('event_no', inplace=True, ignore_index=True)
-        print('Done querying!')
+        try:
+            print('Querying database..')
+            pred_data = pd.read_sql(query, con)
+            pred_data.sort_values('event_no', inplace=True, ignore_index=True)
+            print('Done querying!')
+
+        except pd.errors.DatabaseError:
+            print("The sqlite database query failed. Is the correct table being queried? If plotter.add_model(pulsemap_name) is not supplied, the table name will be the first word in the model name.")
+            raise
 
     return pred_data
 

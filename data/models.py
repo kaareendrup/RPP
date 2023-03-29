@@ -7,7 +7,7 @@ from RPP.utils.data import Cutter
 
 class Model:
     
-    def __init__(self, model_name, database, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions=None):
+    def __init__(self, model_name, database, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions=None, pulsemap_name=None):
         self._name = model_name
         self._predictions = predictions
         self._truths = truths
@@ -26,7 +26,7 @@ class Model:
         self._db_path = database
         self._title = db_name + '_' + model_name
         self._db_name = db_name
-        self._pulsemap_name = db_name.split("_")[0]
+        self._pulsemap_name = db_name.split("_")[0] if pulsemap_name is None else pulsemap_name
 
 
     def add_benchmark(self, index):
@@ -35,9 +35,9 @@ class Model:
 
 class ClassificationModel(Model):
 
-    def __init__(self, model_name, database, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions=None, target_rates=None, target_cuts=None, target_curve_type='ROC', reverse=False):
+    def __init__(self, model_name, database, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions=None, pulsemap_name=None, target_rates=None, target_cuts=None, target_curve_type='ROC', reverse=False):
 
-        super().__init__(model_name, database, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions)
+        super().__init__(model_name, database, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions, pulsemap_name)
 
         # Get target rates based on what is specified
         target_rates, bg_rates = target_extractor(target_rates)
