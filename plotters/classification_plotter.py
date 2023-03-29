@@ -300,7 +300,7 @@ class ClassificationPlotter(Plotter):
             # Get the correct cuts for the target rates
             if cuts is None:
                 model.calculate_target_rates()
-                cuts = [model._performance_rates[model._target_curve_type][0][2], model.get_background_model()._performance_rates[model._target_curve_type][0][2]]
+                cuts = [model._performance_rates[model._target_curve_type][0][2], 1-model.get_background_model()._performance_rates[model._target_curve_type][0][2]]
 
             # Get true, false and discarded rates
             pos_target_true = model._lepton_pos[np.where((model._truths == 1) & (model._predictions > cuts[0]))]
@@ -365,7 +365,7 @@ class ClassificationPlotter(Plotter):
                 # Get true and false rates
                 if cuts is None:
                     model.calculate_target_rates()
-                    cuts = [m._performance_rates[m._target_curve_type][0][2], m.get_background_model()._performance_rates[m._target_curve_type][0][2]]
+                    cuts = [m._performance_rates[m._target_curve_type][0][2], 1-m.get_background_model()._performance_rates[m._target_curve_type][0][2]]
 
                 pos_target_true = m._lepton_pos[np.where((m._truths == 1) & (m._predictions > cuts[0]))]
                 pos_target_false = m._lepton_pos[np.where((m._truths == 1) & (m._predictions < cuts[1]))]
