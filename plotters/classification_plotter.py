@@ -13,6 +13,7 @@ class ClassificationPlotter(Plotter):
     def __init__(self, name, plot_dir, target, background, pos_dict=basic_pos_dict, show_cuts=True, **kwargs):
         super().__init__(name, plot_dir, target, **kwargs)
 
+        # Add classification specific parameters
         self._model_class = ClassificationModel
         self._background = background
         self._background_label = beautify_label(background)
@@ -22,6 +23,7 @@ class ClassificationPlotter(Plotter):
 
     def load_csv(self, file, database=None, cut_functions=None, target=None, reverse=False, **kwargs):
 
+        # Use background label if .csv model ouput is reversed
         target = self._target if not reverse else self._background
         return super().load_csv(file, database, cut_functions, target)
 
@@ -295,11 +297,12 @@ class ClassificationPlotter(Plotter):
                     gridspec_kw={'wspace': .3, 'hspace': .3}
                 )
 
-            # Get true, false and discarded rates
+            # Get the correct cuts for the target rates
             if cuts is None:
                 model.calculate_target_rates()
                 cuts = [model._performance_rates[model._target_curve_type][0][2], model.get_background_model()._performance_rates[model._target_curve_type][0][2]]
 
+            # Get true, false and discarded rates
             pos_target_true = model._lepton_pos[np.where((model._truths == 1) & (model._predictions > cuts[0]))]
             pos_target_false = model._lepton_pos[np.where((model._truths == 1) & (model._predictions < cuts[1]))]
             pos_background_true = model._lepton_pos[np.where((model._truths == 0) & (model._predictions < cuts[1]))]
