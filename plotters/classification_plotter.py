@@ -352,60 +352,59 @@ class ClassificationPlotter(Plotter):
                 print("{}: No position found. Skipping.".format(model._name))
                 continue
 
-            else:
-                _, axses = plt.subplots(
-                        2, 1+(benchmark is not None), 
-                        sharex=True,
-                        figsize=(9*(1+(benchmark is not None)),8), 
-                        gridspec_kw={'wspace': .3, 'hspace': .05, 'height_ratios': [3,1]},
-                        squeeze=False
-                    )
+            _, axses = plt.subplots(
+                    2, 1+(benchmark is not None), 
+                    sharex=True,
+                    figsize=(9*(1+(benchmark is not None)),8), 
+                    gridspec_kw={'wspace': .3, 'hspace': .05, 'height_ratios': [3,1]},
+                    squeeze=False
+                )
 
-                for m, axs, cuts in zip([model, benchmark], axses.T, cuts_list):
+            for m, axs, cuts in zip([model, benchmark], axses.T, cuts_list):
 
-                    # Get true and false rates
-                    if cuts is None:
-                        model.calculate_target_rates()
-                        cuts = [m._performance_rates[m._target_curve_type][0][2], m.get_background_model()._performance_rates[m._target_curve_type][0][2]]
+                # Get true and false rates
+                if cuts is None:
+                    model.calculate_target_rates()
+                    cuts = [m._performance_rates[m._target_curve_type][0][2], m.get_background_model()._performance_rates[m._target_curve_type][0][2]]
 
-                    pos_target_true = m._lepton_pos[np.where((m._truths == 1) & (m._predictions > cuts[0]))]
-                    pos_target_false = m._lepton_pos[np.where((m._truths == 1) & (m._predictions < cuts[1]))]
-                    pos_background_true = m._lepton_pos[np.where((m._truths == 0) & (m._predictions < cuts[1]))]
-                    pos_background_false = m._lepton_pos[np.where((m._truths == 0) & (m._predictions > cuts[0]))]
+                pos_target_true = m._lepton_pos[np.where((m._truths == 1) & (m._predictions > cuts[0]))]
+                pos_target_false = m._lepton_pos[np.where((m._truths == 1) & (m._predictions < cuts[1]))]
+                pos_background_true = m._lepton_pos[np.where((m._truths == 0) & (m._predictions < cuts[1]))]
+                pos_background_false = m._lepton_pos[np.where((m._truths == 0) & (m._predictions > cuts[0]))]
 
-                    positions_list = [[pos_target_true, pos_target_false], [pos_background_true, pos_background_false]]
-                    labels_list = [[self._target_label, self._target_label+' ('+self._background_label+r'$^{ID}$)'], [self._background_label, self._background_label+' ('+self._target_label+r'$^{ID}$)']]
+                positions_list = [[pos_target_true, pos_target_false], [pos_background_true, pos_background_false]]
+                labels_list = [[self._target_label, self._target_label+' ('+self._background_label+r'$^{ID}$)'], [self._background_label, self._background_label+' ('+self._target_label+r'$^{ID}$)']]
 
-                    # Plot            
-                    for positions, labels, colors, color_comp in zip(positions_list, labels_list, np.array(self._color_dict['particles'][:4]).reshape(2,-1), self._color_dict['compare']):
+                # Plot            
+                for positions, labels, colors, color_comp in zip(positions_list, labels_list, np.array(self._color_dict['particles'][:4]).reshape(2,-1), self._color_dict['compare']):
 
-                        radii_true = np.sqrt( positions[0][:,0]**2 + positions[0][:,1]**2 )
-                        radii_false = np.sqrt( positions[1][:,0]**2 + positions[1][:,1]**2 )
+                    radii_true = np.sqrt( positions[0][:,0]**2 + positions[0][:,1]**2 )
+                    radii_false = np.sqrt( positions[1][:,0]**2 + positions[1][:,1]**2 )
 
-                        counts_true, bins_true = np.histogram(radii_true, bins=bins, range=range)
-                        counts_false, _ = np.histogram(radii_false, bins=bins_true)
+                    counts_true, bins_true = np.histogram(radii_true, bins=bins, range=range)
+                    counts_false, _ = np.histogram(radii_false, bins=bins_true)
 
-                        axs[0].stairs(counts_true, bins_true, color=colors[0], label=labels[0])
-                        axs[0].stairs(counts_false, bins_true, color=colors[1], label=labels[1])
+                    axs[0].stairs(counts_true, bins_true, color=colors[0], label=labels[0])
+                    axs[0].stairs(counts_false, bins_true, color=colors[1], label=labels[1])
 
-                        ratios = counts_false/counts_true
-                        bin_centers = bins_true[:-1] + (bins_true[1]-bins_true[0])/2
+                    ratios = counts_false/counts_true
+                    bin_centers = bins_true[:-1] + (bins_true[1]-bins_true[0])/2
 
-                        axs[1].plot(bin_centers, ratios, color=color_comp, marker='.', ls='dotted', label=labels[0])
+                    axs[1].plot(bin_centers, ratios, color=color_comp, marker='.', ls='dotted', label=labels[0])
 
-                    # Decorate plot
-                    axs[0].grid(linestyle='dotted')
-                    axs[0].legend(fontsize=12)
+                # Decorate plot
+                axs[0].grid(linestyle='dotted')
+                axs[0].legend(fontsize=12)
 
-                    axs[0].set_title('False prediction ratio - '+m._name, fontsize=16)
+                axs[0].set_title('False prediction ratio - '+m._name, fontsize=16)
 
-                    axs[1].set_ylim(0)
-                    axs[1].grid(linestyle='dotted')
-                    axs[1].set_xlabel('R [cm]', fontsize=12)
-                    axs[1].legend(fontsize=12)
-                    
-                axses[0,0].set_ylabel('Counts', fontsize=12)
-                axses[1,0].set_ylabel('Ratio', fontsize=12)
-                    
-                plt.savefig(self._plot_dir + model._title + "_scores_by_distance.png")
-                plt.close()
+                axs[1].set_ylim(0)
+                axs[1].grid(linestyle='dotted')
+                axs[1].set_xlabel('R [cm]', fontsize=12)
+                axs[1].legend(fontsize=12)
+                
+            axses[0,0].set_ylabel('Counts', fontsize=12)
+            axses[1,0].set_ylabel('Ratio', fontsize=12)
+                
+            plt.savefig(self._plot_dir + model._title + "_scores_by_distance.png")
+            plt.close()
