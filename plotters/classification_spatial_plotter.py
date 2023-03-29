@@ -112,9 +112,9 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
                 # Plot
                 pnt3d=ax.scatter(features['fX'], features['fY'], features['fZ'], c=features[colorby], vmin=vmin, vmax=vmax, marker='.', s=1.5, label=label)
 
-                ax.set_xlabel('x')
-                ax.set_ylabel('y')
-                ax.set_zlabel('z')
+                ax.set_xlabel('x [cm]')
+                ax.set_ylabel('y [cm]')
+                ax.set_zlabel('z [cm]')
 
                 model_diff = model_diffs[np.where(model._event_nos == event)][0]
                 benchmark_diff = benchmark_diffs[np.where(benchmark._event_nos == event)][0]
@@ -132,7 +132,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             cbar=fig.colorbar(pnt3d, cax=cbar_ax)
             cbar.set_label(colorby)
 
-            plt.savefig(self._plot_dir + model._title + '_single_events_3D_{}.png'.format(colorby))
+            plt.savefig(self._plot_dir + model._title + '_events_3D_single_{}.png'.format(colorby))
             plt.close()
 
 
@@ -212,7 +212,7 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             cbar.set_label(colorby)
 
             plt.subplots_adjust(hspace=0)
-            plt.savefig(self._plot_dir + model._title + '_single_events_displays_{}.png'.format(colorby))
+            plt.savefig(self._plot_dir + model._title + '_event_displays_single_{}.png'.format(colorby))
             plt.close()
 
 
@@ -287,5 +287,5 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             cbar_ax.yaxis.set_ticklabels([])
 
             plt.subplots_adjust(hspace=0)
-            plt.savefig(self._plot_dir + model._title + '_multiple_events_displays_{}.png'.format(colorby))
+            plt.savefig(self._plot_dir + model._title + '_event_displays_multiple_{}.png'.format(colorby))
             plt.close()

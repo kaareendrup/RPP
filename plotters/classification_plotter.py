@@ -111,7 +111,7 @@ class ClassificationPlotter(Plotter):
                 leg_log = (0.085, 0.85) if len(models)==1 else (0.085, 0.85-(len(models)-1)*0.1)
                 axs[0].legend(fontsize=12, loc=leg_log)
 
-                plt.savefig(self._plot_dir + models[0]._title + "_clfhist_" + model_list[0]._title + ".png")
+                plt.savefig(self._plot_dir + models[0]._title + "_clfhist_" + model_list[0]._name + ".png")
                 plt.close()
 
 
@@ -332,7 +332,7 @@ class ClassificationPlotter(Plotter):
 
             fig.suptitle('Event position distributions', fontsize=16)
 
-            plt.savefig(self._plot_dir + models[0]._title + "_scores_by_position_ " + model._title + ".png")
+            plt.savefig(self._plot_dir + models[0]._title + "_scores_by_position_" + model._name + ".png")
             plt.close()
 
 
