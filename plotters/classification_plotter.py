@@ -254,6 +254,7 @@ class ClassificationPlotter(Plotter):
                 ax.set_axisbelow(True)
                 ax.grid(linestyle='dotted')
                 ax.set_xlabel(benchmark._label, fontsize=12)
+                ax.set_title('Distribution of model score', fontsize=16)
                 leg = ax.legend(fontsize=12, markerscale=2, loc='center right')
                 for lh in leg.legendHandles: 
                     lh.set_alpha(1)
