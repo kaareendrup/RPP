@@ -18,6 +18,7 @@ jobs:
   check-codeclimate-credentials:
     name: Check CodeClimate credentials
     runs-on: ubuntu-latest
+    environment: production
     outputs:
       has_credentials: ${{ steps.setvar.outputs.has_credentials }}
     steps:
@@ -36,6 +37,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    environment: production
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
