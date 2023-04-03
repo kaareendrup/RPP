@@ -34,4 +34,6 @@ jobs:
           pip install -r requirements.txt
       # Test
       - name: Test with pytest
-        run: pytest tests/ --doctest-modules --junitxml=junit/test-results.xml --cov=RPP --cov-report=xml --cov-report=html
+        coverage run -m pytest tests/
+        coverage report -m
+        # run: pytest tests/unit_tests.py --doctest-modules --junitxml=junit/test-results.xml --cov=RPP --cov-report=xml --cov-report=html
