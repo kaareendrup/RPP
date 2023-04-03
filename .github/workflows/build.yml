@@ -32,5 +32,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-cov
           pip install -r requirements.txt
+          pwd
+          ls
+          export PYTHONPATH="${PYTHONPATH}:/RPP"
+      - name: Install package
+        uses: ./.github/actions/install
+        with:
+          editable: true
       - name: Test with pytest
         run: pytest tests/ --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
