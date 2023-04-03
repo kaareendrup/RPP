@@ -35,6 +35,7 @@ def w_errorprop(
     err_compare: np.ndarray,
     err_model: np.ndarray,
 ) -> np.ndarray:
+    # Propagate error of residual width
     return np.sqrt(
         w_model**2 / w_compare**4 * err_compare + 1 / w_compare**2 * err_model
     )
@@ -49,6 +50,7 @@ def polar_shift(phi: np.ndarray) -> np.ndarray:
 def rotate_polar_mean(
     phi: np.ndarray, auto_rotate: bool, force_rotation: Optional[float] = None
 ):
+    # Rotate distribution to have the polar mean at 0
     if auto_rotate and (force_rotation is not None):
         print("Two rotating methods specified. Using forced rotation.")
 

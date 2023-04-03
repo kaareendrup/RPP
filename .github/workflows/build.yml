@@ -13,9 +13,33 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+
+  # Check credentials
+  check-codeclimate-credentials:
+    name: Check CodeClimate credentials
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      has_credentials: ${{ steps.setvar.outputs.has_credentials }}
+    steps:
+      - name: Check secrets
+        id: setvar
+        run: |
+         if [[ "${{ secrets.CODECLIMATE_TEST_REPORTER_ID }}" != "" ]]; \
+         then
+           echo "Credentials to access CodeClimate found"
+           echo has_credentials="true" >> $GITHUB_OUTPUT
+         else
+           echo "Credentials to access CodeClimate not found"
+           echo has_credentials="false" >> $GITHUB_OUTPUT
+         fi
+
   build:
 
+    name: Unit tests
+    needs: [ check-codeclimate-credentials ]
     runs-on: ubuntu-latest
+    environment: production
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
@@ -32,9 +56,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-cov
           pip install -r requirements.txt
-      # Test
+      # Run unit tests
       - name: Test with pytest
         run: |
           coverage run -m pytest tests/unit_tests.py
-          coverage report -m
-        # run: pytest tests/unit_tests.py --doctest-modules --junitxml=junit/test-results.xml --cov=RPP --cov-report=xml --cov-report=html
+          coverage xml -o coverage.xml
+      # Publish coverage
+      - name: Publish code coverage
+        uses: paambaati/codeclimate-action@v3.0.0
+        if: needs.check-codeclimate-credentials.outputs.has_credentials == 'true'
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_TEST_REPORTER_ID }}
+        with:
+          coverageCommand: coverage report
+          coverageLocations: coverage.xml:coverage.py
