@@ -19,3 +19,5 @@ FlavourPlotter.plot_performance_curve()
 ```
 
 The current data structure is based on the approach of the [GraphNeT](https://github.com/graphnet-team) framework with model predictions as .csv-files and metadata as sqlite-databases.
+
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
