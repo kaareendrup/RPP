@@ -1,22 +1,31 @@
 
-name: Code Quality
+# This is a simple workflow to check that all modified files satisfy code
+# quality requirements
+name: Code quality
 
-on: [push, pull_request]
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push and PRs
+  push:
+  pull_request:
+    branches: [ main ]
 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  format:
+
+  pre-commit:
+    name: Pre-commit - ${{ matrix.hook }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        hook: ["black", "flake8", "docformatter", "pydocstyle", "mypy"]
     steps:
-      - uses: actions/checkout@v2
-      - name: Format code with black
+      - uses: actions/checkout@v3
+      - name: Install package
+        uses: ./.github/actions/install
+      - name: Run ${{ matrix.hook }}
         run: |
-          pip install black
-          black .
-      - name: Commit changes
-        uses: EndBug/add-and-commit@v4
-        with:
-          author_name: ${{ github.actor }}
-          author_email: ${{ github.actor }}@users.noreply.github.com
-          message: "Format code with black"
-          add: "."
-          branch: ${{ github.ref }}
+          pre-commit run ${{ matrix.hook }} --all-files
