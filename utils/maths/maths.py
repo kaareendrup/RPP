@@ -41,7 +41,7 @@ def w_errorprop(
 
 
 def polar_shift(phi: np.ndarray) -> np.ndarray:
-    # Shist distribution to be between -pi and pi
+    # Shift distribution to be between -pi and pi
     phi = phi % (2 * np.pi)
     return phi - (phi // (np.pi) * (2 * np.pi))
 
