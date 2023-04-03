@@ -1,6 +1,9 @@
 
+from typing import List, Optional
+
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 
 from RPP.plotters.plotter import Plotter
 from RPP.data.models import Model
@@ -9,8 +12,8 @@ from RPP.utils.maths.maths import bin_residual_width, w_errorprop
 
 class RegressionPlotter(Plotter):
 
-    def __init__(self, plot_dir, target, unit, **kwargs):
-        super().__init__(plot_dir, target, **kwargs)
+    def __init__(self, name: str, plot_dir: str, target: str, unit: str, **kwargs):
+        super().__init__(name, plot_dir, target, **kwargs)
         
         self._unit = unit
         self._unit_str = " [" + self._unit +"]"
@@ -20,7 +23,7 @@ class RegressionPlotter(Plotter):
         self._n_residual_bins = []
 
 
-    def plot_2Dhist(self, bins=100):
+    def plot_2Dhist(self, bins: Optional[int] = 100):
         for model_list in [self._models_list, self._benchmarks_list]:
             for model in model_list:
 
@@ -46,7 +49,7 @@ class RegressionPlotter(Plotter):
                 plt.close()
 
 
-    def get_residual_widths(self, model, verbose=False, relative=False):
+    def get_residual_widths(self, model: Model, verbose: Optional[bool] = False, relative: Optional[bool] = False):
 
         avg_res_list, w_list, w_err_list, not_conv = [], [], [], []
 
@@ -78,7 +81,7 @@ class RegressionPlotter(Plotter):
             model._not_conv_x, model._not_conv_y = np.array([]), np.array([])
 
 
-    def calc_diff(self, model, benchmark, color):
+    def calc_diff(self, model: Model, benchmark: Model, color: str):
 
         # Calculate diffs and propagate errors
         diffs_w = (benchmark._w-model._w)/benchmark._w
@@ -92,7 +95,7 @@ class RegressionPlotter(Plotter):
         return compare_model
 
 
-    def add_data_to_plot(self, axis, model):
+    def add_data_to_plot(self, axis: Axes, model: Model):
         
         # Plot residual widths and unconverged values
         axis.errorbar(
@@ -109,7 +112,12 @@ class RegressionPlotter(Plotter):
         axis.scatter(model._not_conv_x, model._not_conv_y, c='r', s=60)
 
 
-    def plot_resolution(self, model_names=None, benchmark_names=None, n_residual_bins=10):
+    def plot_resolution(
+        self, 
+        model_names: Optional[List[str]] = None, 
+        benchmark_names: Optional[List[str]] = None, 
+        n_residual_bins: Optional[int] = 10
+    ):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)

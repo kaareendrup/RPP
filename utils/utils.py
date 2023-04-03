@@ -1,10 +1,15 @@
 
+from typing import List, Tuple, Optional, Any
+
 import numpy as np
+from matplotlib.axes import Axes
 import pathlib
 from sklearn.metrics import roc_curve, roc_auc_score, precision_recall_curve, average_precision_score
 
+# from RPP.data.models import ClassificationModel TODO: function/method placement
 
-def make_plot_dir(name, target, dir):
+
+def make_plot_dir(name: str, target: str, dir: str) -> str:
 
     plot_dir = dir + '/plots/' + target + '_' + name + '/'
 
@@ -14,7 +19,7 @@ def make_plot_dir(name, target, dir):
     return plot_dir
 
 
-def beautify_label(label):
+def beautify_label(label: str) -> str:
 
     l = list(label)
     for i, c in enumerate(l):
@@ -39,12 +44,19 @@ fiTQun_dict = {
 }
 
 
-def PR_flip_outputs(y_true, probas_pred, pos_label=None):
+def PR_flip_outputs(y_true: List[int], probas_pred: List[float], pos_label: Optional[int] = None) -> Tuple[List[float]]:
     pre, rec, thresholds = precision_recall_curve(y_true, probas_pred, pos_label=pos_label)
     return rec, pre, thresholds
 
 
-def get_rates(x, y, thresholds, target_rates, target_cuts, curve_type='ROC'):
+def get_rates(
+    x: List[float], 
+    y: List[float], 
+    thresholds: List[float], 
+    target_rates: Optional[List[float]], 
+    target_cuts: Optional[List[float]], 
+    curve_type: Optional[str] = 'ROC'
+) -> List[List[float]]:
 
     rates_list = []
 
@@ -71,7 +83,8 @@ def get_rates(x, y, thresholds, target_rates, target_cuts, curve_type='ROC'):
     return rates_list
 
 
-def add_rates(axs, model, curve_type=None):
+# def add_rates(axs: Axes, model: ClassificationModel, curve_type: Optional[str] = None) -> None:
+def add_rates(axs: Axes, model: Any, curve_type: Optional[str] = None) -> None:
 
     curve_type = model._target_curve_type if curve_type is None else curve_type
 
@@ -99,7 +112,7 @@ curve_config_dict = {
 }
 
 
-def target_extractor(target):
+def target_extractor(target: str) -> Tuple[str]:
 
     if target is not None:
         if len(target) == 1:
@@ -114,7 +127,7 @@ def target_extractor(target):
     return target, bg
     
 
-def calculate_alpha(data):
+def calculate_alpha(data: List[float]) -> float:
 
     l = len(data)+1
     alpha = min(1, l**(-0.9)*1000)
@@ -122,7 +135,13 @@ def calculate_alpha(data):
     return alpha
 
 
-def shift_axis(ax, a, b, shift_x=False, shift_y=False):
+def shift_axis(
+    ax: Axes, 
+    a: List[float], 
+    b: List[float], 
+    shift_x: Optional[bool] = False, 
+    shift_y: Optional[bool] = False
+) -> List:
 
     ax_max = max([np.percentile(a, 99.9), np.percentile(b, 99.9)])
     ax_min = min([np.percentile(a, .1), np.percentile(b, .1)])

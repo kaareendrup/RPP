@@ -1,3 +1,6 @@
+
+from typing import List, Optional
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import norm, circmean
@@ -6,7 +9,7 @@ from RPP.utils.maths.fits import gaussian_fit
 from RPP.utils.maths.utils import fit_output
 
 
-def bin_residual_width(bin_truths, bin_preds, verbose):
+def bin_residual_width(bin_truths: np.ndarray, bin_preds: np.ndarray, verbose: bool) -> List:
     
     # Calculate residual distribution and percentiles
     bin_res = bin_truths - bin_preds
@@ -26,17 +29,17 @@ def bin_residual_width(bin_truths, bin_preds, verbose):
     return np.mean(np.abs(bin_res)), bin_w, w_err, converged
 
 
-def w_errorprop(w_compare, w_model, err_compare, err_model):
+def w_errorprop(w_compare: np.ndarray, w_model: np.ndarray, err_compare: np.ndarray, err_model: np.ndarray) -> np.ndarray:
     return np.sqrt( w_model**2/w_compare**4 * err_compare + 1/w_compare**2 * err_model )
 
 
-def polar_shift(phi):
+def polar_shift(phi: np.ndarray) -> np.ndarray:
     # Shist distribution to be between -pi and pi
     phi = phi%(2*np.pi)
     return phi - (phi//(np.pi)*(2*np.pi))
 
 
-def rotate_polar_mean(phi, auto_rotate, force_rotation=None):
+def rotate_polar_mean(phi: np.ndarray, auto_rotate: bool, force_rotation: Optional[float] = None):
 
     if auto_rotate and (force_rotation is not None):
         print('Two rotating methods specified. Using forced rotation.')
@@ -48,3 +51,4 @@ def rotate_polar_mean(phi, auto_rotate, force_rotation=None):
         return polar_shift(phi - circmean(phi))
     else:
         return phi
+    

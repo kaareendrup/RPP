@@ -1,4 +1,5 @@
-# %% 
+
+from typing import List, Union, Optional, Callable
 
 import numpy as np
 from scipy.stats import norm
@@ -10,14 +11,14 @@ from RPP.utils.maths.utils import gaussian_pdf, fit_output
 
 # Utility functions 
 
-def set_var_if_None(var, x):
+def set_var_if_None(var: Union[List[float], None], x: List[float]) -> np.ndarray:
     if var is not None:
         return np.array(var)
     else: 
         return np.ones_like(x)
     
 
-def compute_f(f, x, *par):
+def compute_f(f: Callable, x: np.ndarray, *par) -> np.ndarray:
     
     try:
         return f(x, *par)
@@ -29,7 +30,15 @@ def compute_f(f, x, *par):
 
 class Chi2Regression: 
         
-    def __init__(self, f, x, y, sy=None, weights=None, bound=None):
+    def __init__(
+        self, 
+        f: Callable, 
+        x: List[float], 
+        y: List[float], 
+        sy: Optional[List[float]] = None, 
+        weights: Optional[List[float]] = None, 
+        bound: Optional[List[float]] = None
+    ):
         
         if bound is not None:
             x = np.array(x)
@@ -48,7 +57,7 @@ class Chi2Regression:
         self.weights = set_var_if_None(weights, self.x)
         self.func_code = make_func_code(describe(self.f)[1:])
 
-    def __call__(self, *par):  # par are a variable number of model parameters
+    def __call__(self, *par) -> float:  # par are a variable number of model parameters
         
         # compute the function value
         f = compute_f(self.f, self.x, *par)
@@ -61,7 +70,7 @@ class Chi2Regression:
 
 # Gaussian fit
 
-def gaussian_fit(data):
+def gaussian_fit(data: np.ndarray) -> List:
 
     counts, bin_edges = np.histogram(data, bins='fd')
     x = (bin_edges[1:][counts>0] + bin_edges[:-1][counts>0])/2

@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 
 
-def gaussian_pdf(x, N, mu, sigma):
+def gaussian_pdf(x: np.ndarray, N: float, mu: float, sigma: float) -> np.ndarray:
     return N * norm.pdf(x, mu, sigma)
 
 
-def fit_output(bin_truths, bin_res, w_err, p16, p84, N, mu, sigma):
+def fit_output(bin_truths: np.ndarray, bin_res: np.ndarray, w_err: float, p16: float, p84: float, N: float, mu: float, sigma: float):
 
     print(np.mean(bin_truths))
 

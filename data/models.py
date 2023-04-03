@@ -1,5 +1,8 @@
 
+from typing import List, Optional, Tuple
+
 import numpy as np
+from numpy import ndarray
 import copy
 
 from RPP.utils.utils import beautify_label, target_extractor, get_rates, curve_config_dict
@@ -7,7 +10,20 @@ from RPP.utils.data import Cutter
 
 class Model:
     
-    def __init__(self, model_name, database, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions=None, pulsemap_name=None):
+    def __init__(
+        self, model_name: str, 
+        database: str, 
+        predictions: ndarray, 
+        truths: ndarray, 
+        event_nos: ndarray, 
+        original_truths: ndarray, 
+        energy: ndarray, 
+        lepton_pos: ndarray, 
+        color: str, 
+        cut_functions: Optional[List[Cutter]] = None, 
+        pulsemap_name: Optional[str] = None
+    ):
+
         self._name = model_name
         self._predictions = predictions
         self._truths = truths
@@ -29,15 +45,44 @@ class Model:
         self._pulsemap_name = db_name.split("_")[0] if pulsemap_name is None else pulsemap_name
 
 
-    def add_benchmark(self, index):
+    def add_benchmark(self, index: int):
         self._benchmark_index = index
     
 
 class ClassificationModel(Model):
 
-    def __init__(self, model_name, database, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions=None, pulsemap_name=None, target_rates=None, target_cuts=None, target_curve_type='ROC', reverse=False):
+    def __init__(
+        self, 
+        model_name: str, 
+        database: str, 
+        predictions: ndarray, 
+        truths: ndarray, 
+        event_nos: ndarray, 
+        original_truths: ndarray, 
+        energy: ndarray, 
+        lepton_pos: ndarray, 
+        color: str, 
+        cut_functions: Optional[List[Cutter]] = None, 
+        pulsemap_name: Optional[str] = None, 
+        target_rates: Optional[List[List[float]]]= None, 
+        target_cuts: Optional[List[List[float]]] = None, 
+        target_curve_type: Optional[str] = 'ROC', 
+        reverse: Optional[bool] = False
+    ):
 
-        super().__init__(model_name, database, predictions, truths, event_nos, original_truths, energy, lepton_pos, color, cut_functions, pulsemap_name)
+        super().__init__(
+            model_name, 
+            database, 
+            predictions, 
+            truths, 
+            event_nos, 
+            original_truths, 
+            energy, 
+            lepton_pos, 
+            color, 
+            cut_functions, 
+            pulsemap_name
+        )
 
         # Get target rates based on what is specified
         target_rates, bg_rates = target_extractor(target_rates)
@@ -63,7 +108,7 @@ class ClassificationModel(Model):
         self._original_truths = 1-self._original_truths
 
 
-    def get_background_model(self):
+    def get_background_model(self) -> Model:
 
         # Check if a background model already exists
         if self._background_model is None:
@@ -86,7 +131,7 @@ class ClassificationModel(Model):
         return self._background_model
     
 
-    def get_performance_curve(self, curve_type):
+    def get_performance_curve(self, curve_type: str) -> Tuple[float]:
 
         # Check of the model already has information for the desired curve
         if self._performance_curves[curve_type] is None:
@@ -101,7 +146,7 @@ class ClassificationModel(Model):
         return self._performance_curves[curve_type]
 
 
-    def calculate_target_rates(self, curve_type=None):
+    def calculate_target_rates(self, curve_type: Optional[str] = None):
 
         curve_type = self._target_curve_type if curve_type is None else curve_type
 
@@ -132,7 +177,7 @@ class ClassificationModel(Model):
                     cutter._performance_rates = cutter_rates
 
 
-    def get_performance_iterator(self, label, as_bg=False):
+    def get_performance_iterator(self, label: str, as_bg: Optional[bool] = False) -> List[Cutter]:
 
         # Get threshold and construct name
         threshold = self._performance_rates[self._target_curve_type][0][2]

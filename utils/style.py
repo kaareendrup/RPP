@@ -1,9 +1,12 @@
 
+from typing import Optional
+
 import numpy as np
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from matplotlib import cm
 
-def make_default_colormap():
+
+def make_default_colormap() -> ListedColormap:
 
     viridis = cm.get_cmap('viridis', 256)
     newcolors = viridis(np.linspace(0, 1, 256))
@@ -17,16 +20,19 @@ def make_default_colormap():
     return newcmp
 
 
-def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
+def truncate_colormap(
+    cmap, minval: Optional[float] = 0.0, maxval: Optional[float] = 1.0, n: Optional[int] = 100
+) -> LinearSegmentedColormap:
+    
     new_cmap = LinearSegmentedColormap.from_list(
         'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
         cmap(np.linspace(minval, maxval, n)))
+    
     return new_cmap
 
 
 basic_colormap = make_default_colormap()
 dark_colormap = truncate_colormap(cm.get_cmap('gist_rainbow'), 0.05, 0.65)
-# dark_colormap = truncate_colormap(cm.get_cmap('gist_rainbow_r'), 0.35, 0.95)
 
 
 basic_color_dict = {

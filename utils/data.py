@@ -1,10 +1,12 @@
 
+from typing import List, Optional
+
 import numpy as np
 import pandas as pd
 import sqlite3
 
 
-def query_database(file, query):
+def query_database(file: str, query: str) -> pd.DataFrame:
 
     # Get truth and predictions from sqlite database
     with sqlite3.connect(file) as con:
@@ -30,7 +32,7 @@ interaction_type_dict = {
 
 class Cutter():
 
-    def __init__(self, name, checkpoint=False):
+    def __init__(self, name: str, checkpoint: Optional[bool] = False):
 
         self._name = name
         self._checkpoint = checkpoint
@@ -39,19 +41,19 @@ class Cutter():
 
 class InteractionTypeCutter(Cutter):
 
-    def __init__(self, interaction_type):
+    def __init__(self, interaction_type: str):
 
         super().__init__(interaction_type)
         self._interaction_type = interaction_type
 
 
-    def cut(self, event_nos, database):
+    def cut(self, event_nos: List[int], database: str) -> np.ndarray:
 
         type_query = 'SELECT event_no, interaction_type FROM truth WHERE event_no IN {}'.format(tuple(event_nos))
         type_data = query_database(database, type_query)
         
         type_data.drop(type_data[type_data['interaction_type'] != interaction_type_dict[self._interaction_type]].index, inplace=True)
-        return type_data['event_no']
+        return type_data['event_no'].to_numpy()
 
 
 class CLSCCutter(Cutter):
@@ -61,7 +63,7 @@ class CLSCCutter(Cutter):
         super().__init__('CLSC', True)
 
 
-    def cut(self, event_nos, database):
+    def cut(self, event_nos: List[int], database: str) -> np.ndarray:
 
         # Return ratio of nllh
         pred_query = 'select event_no, fqe_ekin, fqmu_ekin, fqe_nll, fqmu_nll, fqe_dw, fqe_dwd, fqmu_dw, fqmu_dwd, fq_q FROM fiTQun WHERE event_no IN {}'.format(tuple(event_nos))
@@ -82,7 +84,7 @@ class CLSCCutter(Cutter):
 
 class PionCutter(Cutter):
 
-    def __init__(self, has_pions=False):
+    def __init__(self, has_pions: Optional[bool] = False):
 
         name = 'has_pions' if has_pions else 'no_pions'
 
@@ -90,7 +92,7 @@ class PionCutter(Cutter):
         self._has_pions = has_pions
 
 
-    def cut(self, event_nos, database):
+    def cut(self, event_nos: List[int], database: str) -> np.ndarray:
 
         type_query = 'SELECT event_no, fNpions FROM truth WHERE event_no IN {}'.format(tuple(event_nos))
         type_data = query_database(database, type_query)
@@ -100,4 +102,4 @@ class PionCutter(Cutter):
         else:
             type_data.drop(type_data[type_data['fNpions'] != 0].index, inplace=True)
         
-        return type_data['event_no']
+        return type_data['event_no'].to_numpy()

@@ -1,16 +1,29 @@
 
+from typing import Dict, List, Optional
+
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 
 from RPP.plotters.plotter import Plotter
-from RPP.data.models import ClassificationModel
+from RPP.data.models import ClassificationModel, Model
 from RPP.utils.utils import calculate_alpha, beautify_label, add_rates, curve_config_dict, shift_axis
 from RPP.utils.style import basic_pos_dict
+from RPP.utils.data import Cutter
 
 
 class ClassificationPlotter(Plotter):
 
-    def __init__(self, name, plot_dir, target, background, pos_dict=basic_pos_dict, show_cuts=True, **kwargs):
+    def __init__(
+            self, name: str, 
+            plot_dir: str, 
+            target: str, 
+            background: str, 
+            pos_dict: Dict[bool, Dict[bool, float]] = basic_pos_dict, 
+            show_cuts: Optional[bool] = True, 
+            **kwargs
+        ):
+
         super().__init__(name, plot_dir, target, **kwargs)
 
         # Add classification specific parameters
@@ -21,14 +34,30 @@ class ClassificationPlotter(Plotter):
         self._pos_dict = pos_dict
 
 
-    def load_csv(self, file, database=None, cut_functions=None, target=None, reverse=False, **kwargs):
+    def load_csv(
+        self, 
+        file: str, 
+        database: Optional[str] = None, 
+        cut_functions: Optional[List[Cutter]] = None, 
+        target: Optional[str] = None, 
+        reverse: Optional[bool] = False, 
+        **kwargs
+    ):
 
         # Use background label if .csv model ouput is reversed
         target = self._target if not reverse else self._background
         return super().load_csv(file, database, cut_functions, target)
 
 
-    def add_rate_info(self, axs, model, horizontal=False, annotate=True, plot_sig=True, plot_bg=True):
+    def add_rate_info(
+        self, 
+        axs: List[Axes], 
+        model: ClassificationModel, 
+        horizontal: Optional[bool] = False, 
+        annotate: Optional[bool] = True, 
+        plot_sig: Optional[bool] = True, 
+        plot_bg: Optional[bool] = True
+    ):
         
         for model, is_bg, plot in zip([model, model.get_background_model()], [False, True], [plot_sig, plot_bg]):
             if (model._target_rates is not None or model._target_cuts is not None) and plot:
@@ -64,7 +93,13 @@ class ClassificationPlotter(Plotter):
                     axs[0].text(pos[0], pos[1], textstr, transform=axs[0].transAxes, fontsize=12, va='top', bbox=props)
 
 
-    def plot_score_hist(self, model_names=None, benchmark_names=None, n_bins=100, shift_x=False):
+    def plot_score_hist(
+        self, 
+        model_names: Optional[List[str]] = None, 
+        benchmark_names: Optional[List[str]] = None, 
+        n_bins: Optional[int] = 100, 
+        shift_x: Optional[bool] = False
+    ):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
@@ -115,7 +150,14 @@ class ClassificationPlotter(Plotter):
                 plt.close()
 
 
-    def plot_performance_curve(self, curve_type='ROC', model_names=None, benchmark_names=None, log_x=False, get_background=False):
+    def plot_performance_curve(
+        self, 
+        curve_type: str = 'ROC', 
+        model_names: Optional[List[str]] = None, 
+        benchmark_names: Optional[List[str]] = None, 
+        log_x: Optional[bool] = False, 
+        get_background: Optional[bool] = False
+    ):
 
         # Get curve type and label configuration
         _, _, x_label, y_label, = curve_config_dict[curve_type]
@@ -168,7 +210,12 @@ class ClassificationPlotter(Plotter):
         plt.close()
 
 
-    def plot_score_by_energy(self, model_names=None, benchmark_names=None, shift_y=False):
+    def plot_score_by_energy(
+        self, 
+        model_names: Optional[List[str]] = None, 
+        benchmark_names: Optional[List[str]] = None, 
+        shift_y: Optional[bool] = False
+    ):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
@@ -220,7 +267,12 @@ class ClassificationPlotter(Plotter):
             plt.close()
 
 
-    def plot_score_comparison(self, model_names=None, benchmark_names=None, shift_axes=True):
+    def plot_score_comparison(
+        self, 
+        model_names: Optional[List[str]] = None, 
+        benchmark_names: Optional[List[str]] = None, 
+        shift_axes: Optional[bool] = True
+    ):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
@@ -275,7 +327,12 @@ class ClassificationPlotter(Plotter):
             plt.close()
 
 
-    def plot_score_by_position(self, model_names=None, benchmark_names=None, thresholds=None):
+    def plot_score_by_position(
+        self, 
+        model_names: Optional[List[str]] = None, 
+        benchmark_names: Optional[List[str]] = None, 
+        thresholds: Optional[List[float]] = None
+    ):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
@@ -337,7 +394,14 @@ class ClassificationPlotter(Plotter):
             plt.close()
 
 
-    def plot_score_ratio_by_distance(self, model_names=None, benchmark_names=None, thresholds=None, bins=20, range=None):
+    def plot_score_ratio_by_distance(
+        self, 
+        model_names: Optional[List[str]] = None, 
+        benchmark_names: Optional[List[str]] = None, 
+        thresholds: Optional[List[float]] = None, 
+        bins: Optional[int] = 20, 
+        range: Optional[List[float]] = None
+    ):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)

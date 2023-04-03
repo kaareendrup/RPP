@@ -1,14 +1,26 @@
+
+from typing import Dict, List, Tuple, Optional, Callable
+
 import pandas as pd
+from matplotlib.colors import ListedColormap
 
 from RPP.utils.fiTQun_schemes import pred_pure
-from RPP.utils.data import query_database
+from RPP.utils.data import query_database, Cutter
 from RPP.data.models import Model
 from RPP.utils.utils import make_plot_dir, fiTQun_dict, beautify_label
 from RPP.utils.style import basic_colormap, basic_color_dict, basic_style_dict
 
 class Plotter:
 
-    def __init__(self, name, plot_dir, target, color_dict=basic_color_dict, style_dict=basic_style_dict, cmap=basic_colormap):
+    def __init__(
+        self, 
+        name: str, 
+        plot_dir: str, 
+        target: str, 
+        color_dict: Optional[Dict[str, List[str]]] = basic_color_dict, 
+        style_dict: Optional[Dict[str, Dict[str, str]]] = basic_style_dict, 
+        cmap: Optional[ListedColormap] = basic_colormap
+    ):
 
         # Member variables # TODO: Create common string that is prepended to plot names
         self._model_class = Model
@@ -20,11 +32,18 @@ class Plotter:
 
         self._target_label = beautify_label(target)
 
-        self._models_list = []
-        self._benchmarks_list = []
+        self._models_list: List[Model] = []
+        self._benchmarks_list: List[Model] = []
 
 
-    def load_csv(self, file, database=None, cut_functions=None, target=None, **kwargs):
+    def load_csv(
+        self, 
+        file: str, 
+        database: Optional[str] = None, 
+        cut_functions: Optional[List[Cutter]] = None, 
+        target: Optional[str] = None, 
+        **kwargs
+    ):
         
         data = pd.read_csv(file)
         data.sort_values('event_no', inplace=True, ignore_index=True)
@@ -72,14 +91,24 @@ class Plotter:
         return preds, truths, event_nos, energy, original_truths, lepton_pos
 
 
-    def add_results(self, results_file, model_name, database_file=None, color=None, cut_functions=None, **kwargs):
+    def add_results(
+        self, 
+        results_file: str, 
+        model_name: str, 
+        database_file: Optional[str] = None, 
+        color: Optional[str] = None, 
+        cut_functions: Optional[List[Cutter]] = None, 
+        **kwargs
+    ):
 
         # Get color from dict if it is not defined
         if color is None:
             color=self._color_dict['model'][len(self._models_list)]
 
         # Load data from csv
-        preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(results_file, database_file, cut_functions, **kwargs)
+        preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(
+            results_file, database_file, cut_functions, **kwargs
+        )
        
         # Define model parameters and append to list
         model = self._model_class(
@@ -99,7 +128,17 @@ class Plotter:
         self._models_list.append(model)
 
 
-    def add_benchmark(self, benchmark_file, model_name, pred_scheme=pred_pure, link_models=None, color=None, database_file=None, cut_functions=None, **kwargs):
+    def add_benchmark(
+        self, 
+        benchmark_file: str, 
+        model_name: str, 
+        pred_scheme: Optional[Callable] = pred_pure, 
+        link_models: Optional[List[str]] = None, 
+        color: Optional[str] = None, 
+        database_file: Optional[str] = None, 
+        cut_functions: Optional[List[Cutter]] = None, 
+        **kwargs
+    ):
         
         # Get color from dict if it is not defined
         if color is None:
@@ -109,7 +148,9 @@ class Plotter:
         if benchmark_file[-4:] == '.csv':
 
             # Load data
-            preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(benchmark_file, database_file, cut_functions, **kwargs)
+            preds, truths, event_nos, energy, original_truths, lepton_pos = self.load_csv(
+                benchmark_file, database_file, cut_functions, **kwargs
+            )
 
         elif benchmark_file[-3:] == '.db':
 
@@ -117,7 +158,7 @@ class Plotter:
             if link_models is not None:
                 truth_model = self.get_models_by_names(link_models, self._models_list)[0]
             else:
-                truth_model = self.model_list[0]
+                truth_model = self._models_list[0]
 
             truths = truth_model._truths
             event_nos = truth_model._event_nos
@@ -161,7 +202,7 @@ class Plotter:
                     model.add_benchmark(len(self._benchmarks_list)-1)
 
 
-    def get_models_by_names(self, model_names, model_list):
+    def get_models_by_names(self, model_names: List[str], model_list: List[Model]) -> List[Model]:
         
         result_list = []
         for name in model_names:
@@ -172,7 +213,7 @@ class Plotter:
         return result_list
 
 
-    def get_models_and_benchmarks(self, model_names, benchmark_names):
+    def get_models_and_benchmarks(self, model_names: List[str], benchmark_names: List[str]) -> List[List[Model]]:
 
         # Get correct models and benchmarks if not supplied
         if model_names is None:
@@ -195,4 +236,4 @@ class Plotter:
             if models[i]._benchmark_index is not None:
                 benchmarks[i] = self._benchmarks_list[models[i]._benchmark_index]
 
-        return models, benchmarks
+        return [models, benchmarks]

@@ -1,8 +1,12 @@
 
+from typing import List, Optional
+
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.colors import ListedColormap
 
+from RPP.data.models import ClassificationModel, Model
 from RPP.plotters.classification_plotter import ClassificationPlotter
 from RPP.utils.data import query_database
 from RPP.utils.style import dark_colormap
@@ -11,7 +15,17 @@ from RPP.utils.maths.maths import rotate_polar_mean
 
 class ClassificationSpatialPlotter(ClassificationPlotter):
 
-    def __init__(self, name, plot_dir, target, background, darkmap=dark_colormap, k=0.1, random_seed=42, **kwargs):
+    def __init__(self, 
+        name: str, 
+        plot_dir: str, 
+        target: str, 
+        background: str, 
+        darkmap: Optional[ListedColormap] = dark_colormap, 
+        k: Optional[float] = 0.1, 
+        random_seed: Optional[int] = 42, 
+        **kwargs
+    ):
+        
         super().__init__(name, plot_dir, target, background, **kwargs)
 
         self._darkmap=darkmap
@@ -19,7 +33,15 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
         self._random_seed = random_seed
 
 
-    def get_good_bad_pools(self, model, benchmark, colorby, allpanels, random_seed=None):
+    def get_good_bad_pools(
+        self, 
+        model: ClassificationModel, 
+        benchmark: ClassificationModel, 
+        colorby: str, 
+        allpanels: bool, 
+        random_seed: Optional[int] = None
+    ) -> List:
+        
         if random_seed is None:
             random_seed = self._random_seed
 
@@ -83,7 +105,13 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
         return events, features_list, truths_list, labels, model_diffs, benchmark_diffs, vmin, vmax
     
 
-    def visualise_discrepancy_plot(self, model_names=None, benchmark_names=None, colorby='fTime', allpanels=False):
+    def visualise_discrepancy_plot(
+        self, 
+        model_names: Optional[List[str]] = None, 
+        benchmark_names: Optional[List[str]] = None, 
+        colorby: Optional[str] = 'fTime', 
+        allpanels: Optional[bool] = False
+    ):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
@@ -136,7 +164,15 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             plt.close()
 
 
-    def plot_event_displays(self, model_names=None, benchmark_names=None, colorby='fTime', allpanels=False, auto_rotate=False, force_rotate=None):
+    def plot_event_displays(
+        self, 
+        model_names: Optional[List[str]] = None, 
+        benchmark_names: Optional[List[str]] = None, 
+        colorby: Optional[str] = 'fTime', 
+        allpanels: Optional[bool] = False, 
+        auto_rotate: Optional[bool] = False, 
+        force_rotate: Optional[List[float]] = None
+    ):
 
         # Initialize
         n_panels = 4 if allpanels else 2
@@ -216,7 +252,15 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
             plt.close()
 
 
-    def plot_several_event_displays(self, model_names=None, benchmark_names=None, rows=3, columns=5, colorby='fTime', auto_rotate=False):
+    def plot_several_event_displays(
+        self, 
+        model_names: Optional[List[str]] = None, 
+        benchmark_names: Optional[List[str]] = None, 
+        rows: Optional[int] = 3, 
+        columns: Optional[int] = 5, 
+        colorby: Optional[str] = 'fTime', 
+        auto_rotate: Optional[bool] = False
+    ):
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(model_names, benchmark_names)
