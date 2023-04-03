@@ -56,7 +56,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-cov
           pip install -r requirements.txt
-      # Test
+      # Run unit tests
       - name: Test with pytest
         run: |
           coverage run -m pytest tests/unit_tests.py
