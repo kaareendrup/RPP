@@ -1,4 +1,3 @@
-
 from typing import Optional
 
 import numpy as np
@@ -7,8 +6,7 @@ from matplotlib import cm
 
 
 def make_default_colormap() -> ListedColormap:
-
-    viridis = cm.get_cmap('viridis', 256)
+    viridis = cm.get_cmap("viridis", 256)
     newcolors = viridis(np.linspace(0, 1, 256))
     start = viridis(0.5)
 
@@ -21,34 +19,47 @@ def make_default_colormap() -> ListedColormap:
 
 
 def truncate_colormap(
-    cmap, minval: Optional[float] = 0.0, maxval: Optional[float] = 1.0, n: Optional[int] = 100
+    cmap,
+    minval: Optional[float] = 0.0,
+    maxval: Optional[float] = 1.0,
+    n: Optional[int] = 100,
 ) -> LinearSegmentedColormap:
-    
     new_cmap = LinearSegmentedColormap.from_list(
-        'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
-        cmap(np.linspace(minval, maxval, n)))
-    
+        "trunc({n},{a:.2f},{b:.2f})".format(n=cmap.name, a=minval, b=maxval),
+        cmap(np.linspace(minval, maxval, n)),
+    )
+
     return new_cmap
 
 
 basic_colormap = make_default_colormap()
-dark_colormap = truncate_colormap(cm.get_cmap('gist_rainbow'), 0.05, 0.65)
+dark_colormap = truncate_colormap(cm.get_cmap("gist_rainbow"), 0.05, 0.65)
 
 
 basic_color_dict = {
-    'model': ['teal', 'lightseagreen',],
-    'benchmark': ['coral', 'darkorange'], 
-    'compare': ['steelblue', 'skyblue'],
-    'annotate': 'red', # firebrick
-    'particles': ['blue', 'cyan', 'red', 'orange', 'lightgrey'],
+    "model": [
+        "teal",
+        "lightseagreen",
+    ],
+    "benchmark": ["coral", "darkorange"],
+    "compare": ["steelblue", "skyblue"],
+    "annotate": "red",  # firebrick
+    "particles": ["blue", "cyan", "red", "orange", "lightgrey"],
 }
 
 basic_style_dict = {
-    'model': {'linestyle': 'solid'},
-    'compare': {'linestyle': 'solid'},
-    'annotate': {'linestyle': 'dotted', 'lw': 2.5}, # 2
-    'histogram': ['solid', 'dashed', 'dotted',]
+    "model": {"linestyle": "solid"},
+    "compare": {"linestyle": "solid"},
+    "annotate": {"linestyle": "dotted", "lw": 2.5},  # 2
+    "histogram": [
+        "solid",
+        "dashed",
+        "dotted",
+    ],
 }
 
 
-basic_pos_dict = {False: {False: [0.66, 0.82], True: [0.1, 0.82]}, True: {False: [0.73, 0.87], True: [0.73, 0.37]}}
+basic_pos_dict = {
+    False: {False: [0.66, 0.82], True: [0.1, 0.82]},
+    True: {False: [0.73, 0.87], True: [0.73, 0.37]},
+}

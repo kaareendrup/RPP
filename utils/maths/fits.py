@@ -1,4 +1,3 @@
-
 from typing import List, Union, Optional, Callable
 
 import numpy as np
@@ -9,17 +8,17 @@ from iminuit import Minuit, describe
 from RPP.utils.maths.utils import gaussian_pdf, fit_output
 
 
-# Utility functions 
+# Utility functions
+
 
 def set_var_if_None(var: Union[List[float], None], x: List[float]) -> np.ndarray:
     if var is not None:
         return np.array(var)
-    else: 
+    else:
         return np.ones_like(x)
-    
+
 
 def compute_f(f: Callable, x: np.ndarray, *par) -> np.ndarray:
-    
     try:
         return f(x, *par)
     except ValueError:
@@ -28,88 +27,92 @@ def compute_f(f: Callable, x: np.ndarray, *par) -> np.ndarray:
 
 # Chi2
 
-class Chi2Regression: 
-        
+
+class Chi2Regression:
     def __init__(
-        self, 
-        f: Callable, 
-        x: List[float], 
-        y: List[float], 
-        sy: Optional[List[float]] = None, 
-        weights: Optional[List[float]] = None, 
-        bound: Optional[List[float]] = None
+        self,
+        f: Callable,
+        x: List[float],
+        y: List[float],
+        sy: Optional[List[float]] = None,
+        weights: Optional[List[float]] = None,
+        bound: Optional[List[float]] = None,
     ):
-        
         if bound is not None:
             x = np.array(x)
             y = np.array(y)
             sy = np.array(sy)
             mask = (x >= bound[0]) & (x <= bound[1])
-            x  = x[mask]
-            y  = y[mask]
+            x = x[mask]
+            y = y[mask]
             sy = sy[mask]
 
         self.f = f  # model predicts y for given x
         self.x = np.array(x)
         self.y = np.array(y)
-        
+
         self.sy = set_var_if_None(sy, self.x)
         self.weights = set_var_if_None(weights, self.x)
         self.func_code = make_func_code(describe(self.f)[1:])
 
     def __call__(self, *par) -> float:  # par are a variable number of model parameters
-        
         # compute the function value
         f = compute_f(self.f, self.x, *par)
-        
+
         # compute the chi2-value
-        chi2 = np.sum(self.weights*(self.y - f)**2/self.sy**2)
-        
+        chi2 = np.sum(self.weights * (self.y - f) ** 2 / self.sy**2)
+
         return chi2
 
 
 # Gaussian fit
 
-def gaussian_fit(data: np.ndarray) -> List:
 
-    counts, bin_edges = np.histogram(data, bins='fd')
-    x = (bin_edges[1:][counts>0] + bin_edges[:-1][counts>0])/2
-    y = counts[counts>0]
-    sy = np.sqrt(counts[counts>0])
+def gaussian_fit(data: np.ndarray) -> List:
+    counts, bin_edges = np.histogram(data, bins="fd")
+    x = (bin_edges[1:][counts > 0] + bin_edges[:-1][counts > 0]) / 2
+    y = counts[counts > 0]
+    sy = np.sqrt(counts[counts > 0])
 
     attempts = 0
     converged = False
 
-    #mu = np.mean(data)
+    # mu = np.mean(data)
     mu = np.median(data)
     sigma = np.std(data)
     N_approx = np.sqrt(len(data))
 
     # Try to fit a gaussian with different initial sigmas
     while (not converged) and (attempts < 4):
-        k = 1/(2**attempts)
+        k = 1 / (2**attempts)
 
         chi2fit = Chi2Regression(gaussian_pdf, x, y, sy)
-        minuit_chi2 = Minuit(chi2fit, N=N_approx, mu=mu, sigma=k*sigma)
-        minuit_chi2.migrad(); 
+        minuit_chi2 = Minuit(chi2fit, N=N_approx, mu=mu, sigma=k * sigma)
+        minuit_chi2.migrad()
 
         converged = minuit_chi2.fmin.is_valid
         attempts += 1
 
     if converged:
-        p84, p16 = np.percentile(data, 84)/2, np.percentile(data, 16)/2
-        N_fit, mu_fit, sigma_fit = minuit_chi2.values['N'], minuit_chi2.values['mu'], minuit_chi2.values['sigma']
+        p84, p16 = np.percentile(data, 84) / 2, np.percentile(data, 16) / 2
+        N_fit, mu_fit, sigma_fit = (
+            minuit_chi2.values["N"],
+            minuit_chi2.values["mu"],
+            minuit_chi2.values["sigma"],
+        )
 
         # Soft check if the distribution is actually Gaussian
-        q = 1e-2 / sigma #1e-3
-        if (norm.pdf(p84, mu_fit, sigma_fit) > q) and (norm.pdf(p16, mu_fit, sigma_fit) > q):
-            #print('Good convergence')
+        q = 1e-2 / sigma  # 1e-3
+        if (norm.pdf(p84, mu_fit, sigma_fit) > q) and (
+            norm.pdf(p16, mu_fit, sigma_fit) > q
+        ):
+            # print('Good convergence')
             return N_fit, mu_fit, sigma_fit, converged
         else:
-            #print('Fixed convergence')
-            #fit_output(0, data, 0, p16, p84, N_fit, mu_fit, sigma_fit)
+            # print('Fixed convergence')
+            # fit_output(0, data, 0, p16, p84, N_fit, mu_fit, sigma_fit)
             converged = False
-            return len(data), mu, sigma*2, converged
+            return len(data), mu, sigma * 2, converged
     else:
-        #print("  WARNING: The ChiSquare fit DID NOT converge!!! ")
-        return len(data), mu, sigma*2, converged
+        # print("  WARNING: The ChiSquare fit DID NOT converge!!! ")
+        return len(data), mu, sigma * 2, converged
