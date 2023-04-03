@@ -22,5 +22,6 @@ The current data structure is based on the approach of the [GraphNeT](https://gi
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![Code quality](https://github.com/kaareendrup/RPP/actions/workflows/code-quality.yml/badge.svg)
+![Build](https://github.com/kaareendrup/RPP/actions/workflows/build.yml/badge.svg)
 [![Maintainability](https://api.codeclimate.com/v1/badges/cabefc73ea4b91a3b159/maintainability)](https://codeclimate.com/github/kaareendrup/RPP/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/cabefc73ea4b91a3b159/test_coverage)](https://codeclimate.com/github/kaareendrup/RPP/test_coverage)
