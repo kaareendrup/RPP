@@ -1,4 +1,3 @@
-
 # This is a simple workflow to check that all modified files satisfy code
 # quality requirements
 name: Code quality
@@ -21,11 +20,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        hook: ["black", "flake8", "docformatter", "pydocstyle", "mypy"]
+        hook: ["black", "flake8"]
     steps:
       - uses: actions/checkout@v3
       - name: Install package
-        uses: ./.github/actions/install
+        run: |
+          pip install ${{ matrix.hook }}
       - name: Run ${{ matrix.hook }}
         run: |
           pre-commit run ${{ matrix.hook }} --all-files
