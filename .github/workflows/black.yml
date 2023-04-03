@@ -28,4 +28,4 @@ jobs:
           pip install ${{ matrix.hook }}
       - name: Run ${{ matrix.hook }}
         run: |
-          ${{ matrix.hook }} --all-files
+          ${{ matrix.hook }}
