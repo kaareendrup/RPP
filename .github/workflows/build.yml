@@ -36,6 +36,8 @@ jobs:
 
   build:
 
+    name: Unit tests
+    needs: [ check-codeclimate-credentials ]
     runs-on: ubuntu-latest
     environment: production
     strategy:
