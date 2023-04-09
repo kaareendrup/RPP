@@ -7,7 +7,7 @@ RPP_ROOT_DIR = os.path.abspath(
 )
 
 # Test directory
-TEST_DIR = os.path.join(RPP_ROOT_DIR, "tests")
+TEST_DIR = os.path.join(RPP_ROOT_DIR, "RPP/tests")
 
 # Test data
 TEST_DATA_DIR = os.path.join(TEST_DIR, "test_data")
