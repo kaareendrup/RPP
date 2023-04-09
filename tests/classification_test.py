@@ -1,15 +1,19 @@
-# %%
+import os
 
 import pytest
 import pandas as pd
 
 from RPP.plotters.classification_plotter import ClassificationPlotter
 from RPP.utils.data import InteractionTypeCutter
+import RPP.utils.constants
 
-data_dir = 'test_data'
+TEST_DATA_DIR = os.path.join(
+    RPP.utils.constants.TEST_DATA_DIR, "i3", "oscNext_genie_level7_v02"
+)
+
 plot_dir = 'test_plots'
-results = data_dir+'/test_database_reco.csv'
-db = data_dir+'/test_database.db'
+results = TEST_DATA_DIR+'/test_database_reco.csv'
+db = TEST_DATA_DIR+'/test_database.db'
 
 FlavourPlotter = ClassificationPlotter('test_model', plot_dir, 'v_e', 'v_u')
 
@@ -23,5 +27,3 @@ assert(FlavourPlotter._models_list[0]._label == r'test_model')
 assert(FlavourPlotter._models_list[0]._db_name == 'test_database')
 
 assert(FlavourPlotter._models_list[0]._predictions[0] == 1 - pd.read_csv(results)['v_u_pred'][1])
-
-# %%
