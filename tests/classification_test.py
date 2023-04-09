@@ -7,9 +7,7 @@ from RPP.plotters.classification_plotter import ClassificationPlotter
 from RPP.utils.data import InteractionTypeCutter
 import RPP.utils.constants
 
-TEST_DATA_DIR = os.path.join(
-    RPP.utils.constants.TEST_DATA_DIR, "i3", "oscNext_genie_level7_v02"
-)
+TEST_DATA_DIR = RPP.utils.constants.TEST_DATA_DIR
 
 plot_dir = 'test_plots'
 results = TEST_DATA_DIR+'/test_database_reco.csv'
