@@ -196,12 +196,12 @@ class ClassificationPlotter(Plotter):
                     self.add_rate_info(axs, model)
 
                 # Decorate plot
-                leg_log = (
+                leg_loc = (
                     (0.085, 0.85)
                     if len(models) == 1
                     else (0.085, 0.85 - (len(models) - 1) * 0.1)
                 )
-                axs[0].legend(fontsize=12, loc=leg_log)
+                axs[0].legend(fontsize=12, loc=leg_loc)
 
                 plt.savefig(
                     self._plot_dir
