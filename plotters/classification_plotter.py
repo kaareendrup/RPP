@@ -37,19 +37,6 @@ class ClassificationPlotter(Plotter):
         self._show_cuts = show_cuts
         self._pos_dict = pos_dict
 
-    def load_csv(
-        self,
-        file: str,
-        database: Optional[str] = None,
-        cut_functions: Optional[List[Cutter]] = None,
-        target: Optional[str] = None,
-        reverse: Optional[bool] = False,
-        **kwargs
-    ):
-        # Use background label if .csv model ouput is reversed
-        target = self._target if not reverse else self._background
-        return super().load_csv(file, database, cut_functions, target)
-
     def add_rate_info(
         self,
         axs: List[Axes],
@@ -59,18 +46,15 @@ class ClassificationPlotter(Plotter):
         plot_sig: Optional[bool] = True,
         plot_bg: Optional[bool] = True,
     ):
-        for model, is_bg, plot in zip(
+        for m, is_bg, plot in zip(
             [model, model.get_background_model()], [False, True], [plot_sig, plot_bg]
         ):
             if (
-                model._target_rates is not None or model._target_cuts is not None
+                m._target_rates is not None or m._target_cuts is not None
             ) and plot:
                 # Get rate data
-                model.calculate_target_rates()
-                threshold = model._performance_rates[model._target_curve_type][0][2]
-
-                # Get position
-                pos = self._pos_dict[horizontal][is_bg]
+                m.calculate_target_rates()
+                threshold = m._performance_rates[m._target_curve_type][0][2]
 
                 # Reverse threshold if background, get correct label and remove math mode
                 label, threshold = (
@@ -99,7 +83,7 @@ class ClassificationPlotter(Plotter):
                 # Add text to plot
                 if annotate:
                     text = []
-                    for function in model.get_performance_iterator(label, is_bg):
+                    for function in m.get_performance_iterator(label, is_bg):
                         if function._checkpoint:
                             text.append(function._name)
                             text.append(
@@ -122,13 +106,14 @@ class ClassificationPlotter(Plotter):
                         pad=0.5,
                     )
                     axs[0].text(
-                        pos[0],
-                        pos[1],
+                        self._pos_dict[horizontal][is_bg][0],
+                        self._pos_dict[horizontal][is_bg][1],
                         textstr,
                         transform=axs[0].transAxes,
                         fontsize=12,
                         va="top",
                         bbox=props,
+                        zorder=6,
                     )
 
     def plot_score_hist(
@@ -221,12 +206,7 @@ class ClassificationPlotter(Plotter):
         get_background: Optional[bool] = False,
     ):
         # Get curve type and label configuration
-        (
-            _,
-            _,
-            x_label,
-            y_label,
-        ) = curve_config_dict[curve_type]
+        curve_config = curve_config_dict[curve_type]
         target, title = (
             (self._target_label, curve_type)
             if not get_background
@@ -274,11 +254,11 @@ class ClassificationPlotter(Plotter):
         for ax in axs:
             ax.set_axisbelow(True)
             ax.grid(linestyle="dotted")
-            ax.set_xlabel(x_label, fontsize=12)
+            ax.set_xlabel(curve_config['x_label'], fontsize=12)
             ax.set_title("Model performance on {}".format(target), fontsize=12)
             ax.set_ylim(-0.02, 1.02)
 
-        axs[0].set_ylabel(y_label, fontsize=12)
+        axs[0].set_ylabel(curve_config['y_label'], fontsize=12)
         axs[0].set_xlim(-0.02, 1.02)
         axs[-1].legend()
         if curve_type == "ROC":

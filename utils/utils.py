@@ -126,13 +126,18 @@ def add_rates(axs: Axes, model: Any, curve_type: Optional[str] = None) -> None:
 
 
 curve_config_dict = {
-    "ROC": [roc_curve, roc_auc_score, "FPR", "TPR"],
-    "PR": [
-        PR_flip_outputs,
-        average_precision_score,
-        "Efficiency (Recall)",
-        "Purity (Precision)",
-    ],
+    "ROC": {
+        "metric_function": roc_curve, 
+        "metric_score": roc_auc_score, 
+        "x_label": "FPR", 
+        "y_label": "TPR",
+    },
+    "PR": {
+        "metric_function": PR_flip_outputs,
+        "metric_score": average_precision_score,
+        "x_label": "Efficiency (Recall)",
+        "y_label": "Purity (Precision)",
+    },
 }
 
 
