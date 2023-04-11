@@ -56,9 +56,6 @@ class ClassificationPlotter(Plotter):
                 model.calculate_target_rates()
                 threshold = model._performance_rates[model._target_curve_type][0][2]
 
-                # Get position
-                pos = self._pos_dict[horizontal][is_bg]
-
                 # Reverse threshold if background, get correct label and remove math mode
                 label, threshold = (
                     (self._background_label[1:-1], 1 - threshold)
@@ -109,8 +106,8 @@ class ClassificationPlotter(Plotter):
                         pad=0.5,
                     )
                     axs[0].text(
-                        pos[0],
-                        pos[1],
+                        self._pos_dict[horizontal][is_bg][0],
+                        self._pos_dict[horizontal][is_bg][1],
                         textstr,
                         transform=axs[0].transAxes,
                         fontsize=12,
