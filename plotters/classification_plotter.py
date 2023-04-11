@@ -46,15 +46,15 @@ class ClassificationPlotter(Plotter):
         plot_sig: Optional[bool] = True,
         plot_bg: Optional[bool] = True,
     ):
-        for model, is_bg, plot in zip(
+        for m, is_bg, plot in zip(
             [model, model.get_background_model()], [False, True], [plot_sig, plot_bg]
         ):
             if (
-                model._target_rates is not None or model._target_cuts is not None
+                m._target_rates is not None or m._target_cuts is not None
             ) and plot:
                 # Get rate data
-                model.calculate_target_rates()
-                threshold = model._performance_rates[model._target_curve_type][0][2]
+                m.calculate_target_rates()
+                threshold = m._performance_rates[m._target_curve_type][0][2]
 
                 # Reverse threshold if background, get correct label and remove math mode
                 label, threshold = (
@@ -83,7 +83,7 @@ class ClassificationPlotter(Plotter):
                 # Add text to plot
                 if annotate:
                     text = []
-                    for function in model.get_performance_iterator(label, is_bg):
+                    for function in m.get_performance_iterator(label, is_bg):
                         if function._checkpoint:
                             text.append(function._name)
                             text.append(
@@ -113,6 +113,7 @@ class ClassificationPlotter(Plotter):
                         fontsize=12,
                         va="top",
                         bbox=props,
+                        zorder=6,
                     )
 
     def plot_score_hist(

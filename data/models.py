@@ -1,8 +1,8 @@
 from typing import List, Optional, Tuple
 
+import copy
 import numpy as np
 from numpy import ndarray
-import copy
 
 from RPP.utils.utils import (
     beautify_label,
@@ -36,7 +36,8 @@ class Model:
         self._energy = energy
         self._lepton_pos = lepton_pos
         self._color = color
-        self._cut_functions = cut_functions
+        self._cut_functions = copy.deepcopy(cut_functions)
+        self.flush_cut_functions()
 
         self._benchmark_index = None
 
@@ -116,11 +117,13 @@ class ClassificationModel(Model):
             background_model._name = self._name + "_BG"
             background_model._label = beautify_label(background_model._name)[1:-1]
             background_model.invert_results()
+            background_model._performance_curves = {"ROC": None, "PRC": None}
+            background_model.flush_cut_functions()
 
-            background_model._target_rates = background_model._bg_rates
-            background_model._bg_rates = background_model._target_rates
-            background_model._target_cuts = background_model._bg_cuts
-            background_model._bg_cuts = background_model._target_cuts
+            background_model._target_rates = self._bg_rates
+            background_model._bg_rates = self._target_rates
+            background_model._target_cuts = self._bg_cuts
+            background_model._bg_cuts = self._target_cuts
 
             if self._performance_rates[self._target_curve_type] is not None:
                 background_model.calculate_target_rates()
@@ -182,6 +185,11 @@ class ClassificationModel(Model):
                             cutter_rates[0] *= ones_ratio
 
                     cutter._performance_rates = cutter_rates
+
+    def flush_cut_functions(self):
+        # Remove rate info to each cut function
+        for cutter in self._cut_functions:
+            cutter._performance_rates = None
 
     def get_performance_iterator(
         self, label: str, as_bg: Optional[bool] = False
