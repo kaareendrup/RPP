@@ -37,19 +37,6 @@ class ClassificationPlotter(Plotter):
         self._show_cuts = show_cuts
         self._pos_dict = pos_dict
 
-    def load_csv(
-        self,
-        file: str,
-        database: Optional[str] = None,
-        cut_functions: Optional[List[Cutter]] = None,
-        target: Optional[str] = None,
-        reverse: Optional[bool] = False,
-        **kwargs
-    ):
-        # Use background label if .csv model ouput is reversed
-        target = self._target if not reverse else self._background
-        return super().load_csv(file, database, cut_functions, target)
-
     def add_rate_info(
         self,
         axs: List[Axes],
@@ -221,12 +208,7 @@ class ClassificationPlotter(Plotter):
         get_background: Optional[bool] = False,
     ):
         # Get curve type and label configuration
-        (
-            _,
-            _,
-            x_label,
-            y_label,
-        ) = curve_config_dict[curve_type]
+        curve_config = curve_config_dict[curve_type]
         target, title = (
             (self._target_label, curve_type)
             if not get_background
@@ -274,11 +256,11 @@ class ClassificationPlotter(Plotter):
         for ax in axs:
             ax.set_axisbelow(True)
             ax.grid(linestyle="dotted")
-            ax.set_xlabel(x_label, fontsize=12)
+            ax.set_xlabel(curve_config['x_label'], fontsize=12)
             ax.set_title("Model performance on {}".format(target), fontsize=12)
             ax.set_ylim(-0.02, 1.02)
 
-        axs[0].set_ylabel(y_label, fontsize=12)
+        axs[0].set_ylabel(curve_config['y_label'], fontsize=12)
         axs[0].set_xlim(-0.02, 1.02)
         axs[-1].legend()
         if curve_type == "ROC":

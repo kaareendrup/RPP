@@ -133,16 +133,11 @@ class ClassificationModel(Model):
         # Check of the model already has information for the desired curve
         if self._performance_curves[curve_type] is None:
             # Calculate curve parameters and add to dictionary
-            (
-                metric_function,
-                metric_score,
-                _,
-                _,
-            ) = curve_config_dict[curve_type]
-            x_rate, y_rate, thresholds = metric_function(
+            curve_config = curve_config_dict[curve_type]
+            x_rate, y_rate, thresholds = curve_config['metric_function'](
                 self._truths, self._predictions
             )
-            auc = metric_score(self._truths, self._predictions)
+            auc = curve_config['metric_score'](self._truths, self._predictions)
 
             self._performance_curves[curve_type] = (x_rate, y_rate, thresholds, auc)
 
