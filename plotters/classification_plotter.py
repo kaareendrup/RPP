@@ -122,6 +122,7 @@ class ClassificationPlotter(Plotter):
         benchmark_names: Optional[List[str]] = None,
         n_bins: Optional[int] = 100,
         shift_x: Optional[bool] = False,
+        show_rate_info: Optional[bool] = True, 
     ):
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(
@@ -178,7 +179,7 @@ class ClassificationPlotter(Plotter):
                         if log:
                             ax.set_yscale("log")
 
-                    self.add_rate_info(axs, model)
+                    self.add_rate_info(axs, model, annotate=show_rate_info)
 
                 # Decorate plot
                 leg_loc = (
@@ -274,6 +275,7 @@ class ClassificationPlotter(Plotter):
         model_names: Optional[List[str]] = None,
         benchmark_names: Optional[List[str]] = None,
         shift_y: Optional[bool] = False,
+        show_rate_info: Optional[bool] = True,
     ):
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self.get_models_and_benchmarks(
@@ -325,7 +327,7 @@ class ClassificationPlotter(Plotter):
                     ax, _, _ = shift_axis(ax, m_ones, m_zeros, shift_y=True)
 
                 # Add rate info to plot
-                self.add_rate_info([ax], m, horizontal=True)
+                self.add_rate_info([ax], m, horizontal=True, annotate=show_rate_info)
 
                 # Decorate plot
                 ax.set_axisbelow(True)
