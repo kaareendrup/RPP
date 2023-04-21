@@ -18,7 +18,7 @@ FlavourPlotter = ClassificationPlotter('test_model', plot_dir, 'v_e', 'v_u')
 def test_classification_plotter_init():
 
     assert(FlavourPlotter._target_label == r"$\nu_e$")
-    assert(FlavourPlotter._background_label == r"$\nu_u$")
+    assert(FlavourPlotter._background_label == r"$\nu_\mu$")
 
 
 FlavourPlotter.add_results(results, 'test_model', db, reverse=True, cut_functions=[InteractionTypeCutter('cc')])

@@ -14,6 +14,8 @@ from sklearn.metrics import (
 
 
 def make_plot_dir(name: str, target: str, dir: str) -> str:
+
+    # Generate the plotting dir from the data dir and plot parameters
     plot_dir = dir + "/plots/" + target + "_" + name + "/"
 
     path = pathlib.Path(plot_dir)
@@ -23,18 +25,27 @@ def make_plot_dir(name: str, target: str, dir: str) -> str:
 
 
 def beautify_label(label: str) -> str:
+
+    # Turns shorthand for particle names into greek letters
     l = list(label)
+    beauty_dict = {"v": r"\nu", "u": r"\mu"}
     for i, c in enumerate(l):
-        if c == "v":
+        if c in ["v", "u"]:
+
+            # If c is first char and second char is not alphanumeric
             if i == 0:
                 if not l[i + 1].isalnum():
-                    l[i] = r"\nu"
+                    l[i] = beauty_dict[c]
+
+            # If c is last char and second to last char is not alphanumeric
             elif i == len(l) - 1:
                 if not l[i - 1].isalnum():
-                    l[i] = r"\nu"
+                    l[i] = beauty_dict[c]
+
+            # If c is any other char and and surrounding chars are not alphanumeric
             else:
                 if not l[i - 1].isalnum() and not l[i + 1].isalnum():
-                    l[i] = r"\nu"
+                    l[i] = beauty_dict[c]
 
     label = "".join(l)
     return r"$%s$" % (label)
@@ -49,6 +60,8 @@ fiTQun_dict = {
 def PR_flip_outputs(
     y_true: List[int], probas_pred: List[float], pos_label: Optional[int] = None
 ) -> Tuple[List[float]]:
+
+    # A version of precision_recall_curve where (recall) x is first output
     pre, rec, thresholds = precision_recall_curve(
         y_true, probas_pred, pos_label=pos_label
     )
@@ -63,11 +76,14 @@ def get_rates(
     target_cuts: Optional[List[float]],
     curve_type: Optional[str] = "ROC",
 ) -> List[List[float]]:
+
+    # Calculate the resulting FPR/TPR/pre/rec rates given a list of target rates or cuts 
     rates_list = []
 
     if target_rates is not None and target_cuts is not None:
         print("Both target cuts and rates specified. Using rates.")
 
+    # Given target rates
     if target_rates is not None:
         for rate in target_rates:
             if curve_type == "ROC":
@@ -78,6 +94,7 @@ def get_rates(
             idx = np.argmin(diffs)
             rates_list.append([x[idx], y[idx], thresholds[idx]])
 
+    # Given target cuts
     elif target_cuts is not None:
         for cut in target_cuts:
             diffs = abs(thresholds - cut)
@@ -89,8 +106,11 @@ def get_rates(
 
 # def add_rates(axs: Axes, model: ClassificationModel, curve_type: Optional[str] = None) -> None:
 def add_rates(axs: Axes, model: Any, curve_type: Optional[str] = None) -> None:
+
+    # Add rate indicators to a performance cruve
     curve_type = model._target_curve_type if curve_type is None else curve_type
 
+    # Loop over alls stored rates
     for i_x, i_y, ithreshold in model._performance_rates[curve_type]:
         axs[-1].scatter(i_x, i_y, color="k", s=10, zorder=3)
 
@@ -141,7 +161,9 @@ curve_config_dict = {
 }
 
 
-def target_extractor(target: str) -> Tuple[str]:
+def target_extractor(target: List[List[float]]) -> Tuple[List[float]]:
+
+    # Splits 2D list of targets rates into signal and background
     if target is not None:
         if len(target) == 1:
             target, bg = target[0], target[0]
@@ -156,6 +178,8 @@ def target_extractor(target: str) -> Tuple[str]:
 
 
 def calculate_alpha(data: List[float]) -> float:
+
+    # Calculate scatter plot opacity from data size
     l = len(data) + 1
     alpha = min(1, l ** (-0.9) * 1000)
 
@@ -169,9 +193,13 @@ def shift_axis(
     shift_x: Optional[bool] = False,
     shift_y: Optional[bool] = False,
 ) -> List:
+
+    # Shift axis limits if the data has outliers
     ax_max = max([np.percentile(a, 99.9), np.percentile(b, 99.9)])
     ax_min = min([np.percentile(a, 0.1), np.percentile(b, 0.1)])
     ax_mean = (np.mean(a) + np.mean(b)) / 2
+
+    # Calculate limits from distribution
     dist = max([ax_max - ax_mean, ax_mean - ax_min])
     ax_min, ax_max = (
         (0, 1)
@@ -179,6 +207,7 @@ def shift_axis(
         else (ax_mean - dist * 1.1, ax_mean + dist * 1.1)
     )
 
+    # Apply to axes
     if shift_x:
         ax.set_xlim(ax_min, ax_max)
     if shift_y:
