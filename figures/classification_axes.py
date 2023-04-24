@@ -19,6 +19,7 @@ class ClassficationAxes(RPPAxes):
         log_y: Optional[bool] = False,
         shift_x: Optional[bool] = False,
     ):
+
         # Add the correct model 
         models = self._plotter.get_models_by_names(model_names)
 
@@ -61,7 +62,9 @@ class ClassficationAxes(RPPAxes):
             if log_y:
                 self.set_yscale("log")
 
-            #self.add_rate_info(axs, model)
+        # Store models and set plot type
+        self._used_models = models
+        self._plot_type = 'score_hist'
 
     def performance_curve(
         self,
@@ -105,10 +108,6 @@ class ClassficationAxes(RPPAxes):
                     linestyle="solid",
                 )
 
-                # if model._target_rates is not None:
-                #     model.calculate_target_rates(curve_type)
-                    # add_rates(axs, model, curve_type)
-
         # Add plot style and info
         self.set_axisbelow(True)
         self.grid(linestyle="dotted")
@@ -123,7 +122,10 @@ class ClassficationAxes(RPPAxes):
             self.set_xlim(-0.02, 1.02)
         if curve_type == "ROC" and not log_x:
             self.plot([0, 1], [0, 1], color="k", linestyle="dashed", linewidth=1)
-        
+
+        # Set plot type
+        self._plot_type = 'performance_curve'
+   
     def score_by_energy(
         self,
         model_names: Optional[List[str]] = None,
@@ -166,9 +168,6 @@ class ClassficationAxes(RPPAxes):
         # Force different y-axis if the data has outliers
         self.shift_axis(m_ones, m_zeros, shift_y=shift_y)
 
-        # Add rate info to plot
-        # self.add_rate_info([ax], m, horizontal=True)
-
         # Decorate plot
         self.set_axisbelow(True)
         self.grid(linestyle="dotted")
@@ -186,11 +185,15 @@ class ClassficationAxes(RPPAxes):
         for lh in leg.legendHandles:
             lh.set_alpha(1)
 
+        # Store models and set plot type
+        self._used_models = models
+        self._plot_type, self._horizontal = 'score_by_energy', True
+
     def score_comparison(
         self,
         model_names: Optional[List[str]] = None,
         benchmark_names: Optional[List[str]] = None,
-        get_background: Optional[bool] = False,
+        background: Optional[bool] = False,
         shift_x: Optional[bool] = True,
         shift_y: Optional[bool] = True,
     ):
@@ -208,7 +211,7 @@ class ClassficationAxes(RPPAxes):
             # Configure for background
             target, label = (
                 (1, self._plotter._target_label) 
-                if not get_background else 
+                if not background else 
                 (0, self._plotter._background_label)
             )
 
@@ -217,14 +220,6 @@ class ClassficationAxes(RPPAxes):
             
             # Get correct opacity for plotting
             alpha = calculate_alpha(model._predictions)
-
-            # for ax, preds, label, color, is_sig in zip(
-            #     axs,
-            #     predictions,
-            #     [self._target_label, self._background_label],
-            #     [model._color, "k"],
-            #     [True, False],
-            # ):
 
             # Plot
             self.scatter(
@@ -240,29 +235,19 @@ class ClassficationAxes(RPPAxes):
         self.set_axisbelow(True)
         self.grid(linestyle="dotted")
         self.set_xlabel(benchmark._label, fontsize=12)
+        self.set_ylabel(model._label, fontsize=12)
         self.set_title("Distribution of model score", fontsize=16)
         leg = self.legend(fontsize=12, markerscale=2, loc="center right")
         for lh in leg.legendHandles:
             lh.set_alpha(1)
 
-            # # Add rates
-            # self.add_rate_info(
-            #     [ax], benchmark, annotate=False, plot_sig=is_sig, plot_bg=not is_sig
-            # )
-            # self.add_rate_info(
-            #     [ax],
-            #     model,
-            #     horizontal=True,
-            #     annotate=False,
-            #     plot_sig=is_sig,
-            #     plot_bg=not is_sig,
-            # )
-
-        self.set_ylabel(model._label, fontsize=12)
-
         # Force shifted axes if the data has outliers
         self.shift_axis(b_preds, b_preds, shift_x=shift_x)
         self.shift_axis(m_preds, m_preds, shift_y=shift_y)
+
+        # Store models and set plot type
+        self._used_models = models + benchmarks
+        self._plot_type = 'score_comparison'
 
     def score_by_position(
         self,
@@ -349,6 +334,9 @@ class ClassficationAxes(RPPAxes):
         leg = self.legend(loc="upper right")
         for lh in leg.legendHandles:
             lh.set_alpha(1)
+
+        # Set plot type
+        self._plot_type = 'score_by_position'
 
     def score_hist_by_distance(
         self,
@@ -459,6 +447,9 @@ class ClassficationAxes(RPPAxes):
         self.set_ylabel("Counts", fontsize=12)
         self.legend(fontsize=12)
 
+        # Set plot type
+        self._plot_type = 'score_hist_by_distance'
+
     def score_ratio_by_distance(
         self,
         link_axis: Optional[RPPAxes] = None,
@@ -488,3 +479,78 @@ class ClassficationAxes(RPPAxes):
         self.legend(fontsize=12)
         self.set_xlabel("R [cm]", fontsize=12)
         self.set_ylabel("Ratio", fontsize=12)
+
+        # Set plot type
+        self._plot_type = 'score_ratio_by_distance'
+
+    def add_cut_info(
+        self,
+        annotate: Optional[bool] = True,
+        background: Optional[bool] = False,
+    ):
+        assert self._plot_type in ['score_hist', 'score_by_energy', 'score_comparison'], 'Only plot with model scores can have cuts and rates.'
+
+        for i, model in enumerate(self._used_models):
+
+            assert model._target_rates is not None or model._target_cuts is not None, 'One of the displayed models have no target parameters.'
+
+            # Flip half the models if score comparison plot
+            if self._plot_type == 'score_comparison' and i < len(self._used_models)/2:
+                flip = True
+            else:
+                flip = False
+
+            # Get rate data
+            model.calculate_target_rates()
+            threshold = model._performance_rates[model._target_curve_type][0][2]
+
+            # Reverse threshold if background, get correct label and remove math mode
+            label, threshold = (
+                (self._plotter._background_label[1:-1], 1 - threshold)
+                if background
+                else (self._plotter._target_label[1:-1], threshold)
+            )
+
+            self.dynaline(
+                threshold,
+                flip=flip,
+                c=self._plotter._color_dict["annotate"],
+                zorder=3,
+                **self._plotter._style_dict["annotate"],
+            )
+
+            # Add text to plot
+            if annotate:
+                text = []
+                for function in model.get_performance_iterator(label, background):
+                    if function._checkpoint:
+                        text.append(function._name)
+                        text.append(
+                            r"TPR$_{%s} = %.2f$"
+                            % (label, function._performance_rates[1] * 100)
+                            + "%"
+                        )
+                        text.append(
+                            r"FPR$_{%s} = %.2f$"
+                            % (label, function._performance_rates[0] * 100)
+                            + "%"
+                        )
+
+                textstr = "\n".join(tuple(text))
+                props = dict(
+                    boxstyle="square",
+                    facecolor="white",
+                    alpha=0.8,
+                    edgecolor="lightgray",
+                    pad=0.5,
+                )
+                self.text(
+                    self._plotter._pos_dict[self._horizontal][background][0],
+                    self._plotter._pos_dict[self._horizontal][background][1],
+                    textstr,
+                    transform=self.transAxes,
+                    fontsize=12,
+                    va="top",
+                    bbox=props,
+                    zorder=6,
+                )

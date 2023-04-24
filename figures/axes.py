@@ -36,6 +36,7 @@ class RPPAxes(Axes):
         self._plotter: Plotter = plotter
         self._figure_index = index
         self._subplot_args = args
+        self._horizontal = False
 
         # Remove mpl axes and add new axes to figure
         fig.delaxes(mpl_axis)
@@ -97,3 +98,11 @@ class RPPAxes(Axes):
             exit()
 
         return self.get_figure().get_axes()[neighbour_index]
+
+    def dynaline(self, *args, flip=False, **kwargs):
+
+        # Place a line along the primary axis of the subplot
+        if self._horizontal != flip:
+            self.axhline(*args, **kwargs)
+        else:
+            self.axvline(*args, **kwargs)
