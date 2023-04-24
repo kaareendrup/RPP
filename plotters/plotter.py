@@ -45,15 +45,14 @@ class Plotter:
         file: str,
         database: Optional[str] = None,
         cut_functions: Optional[List[Cutter]] = None,
-        target: Optional[str] = None,
-        **kwargs
+        reverse: Optional[bool] = False,
+        **kwargs,
     ):
         data = pd.read_csv(file)
         data.sort_values("event_no", inplace=True, ignore_index=True)
         event_nos = data["event_no"].to_numpy()
 
-        if target is None:
-            target = self._target
+        target = self._target if not reverse else self._background
 
         original_truths = data[target].to_numpy()
 
@@ -76,23 +75,20 @@ class Plotter:
         preds, truths = data[target + "_pred"].to_numpy(), data[target].to_numpy()
 
         # Get energy and position data
+        energy = None
+        lepton_pos = None
         if database is not None:
             try:
                 features_query = "SELECT fLE, fVx, fVy, fVz, event_no FROM truth WHERE event_no IN {}".format(
                     tuple(event_nos)
                 )
                 features = query_database(database, features_query)
-                features.sort_values("event_no", inplace=True, ignore_index=True)
                 energy = features["fLE"].to_numpy()
                 lepton_pos = features[["fVx", "fVy", "fVz"]].to_numpy()
             except:
                 print("No values extracted from database")
-                energy = None
-                lepton_pos = None
         else:
             print("No database specified, no energy and position extracted")
-            energy = None
-            lepton_pos = None
 
         return preds, truths, event_nos, energy, original_truths, lepton_pos
 
@@ -236,22 +232,25 @@ class Plotter:
         else:
             models = self.get_models_by_names(model_names, self._models_list)
 
+        # Extract benchmarks if not provided
         if benchmark_names is None:
             if len(self._benchmarks_list) == 0:
                 benchmarks = [None] * len(models)
             else:
                 benchmarks = [self._benchmarks_list[0]] * len(models)
-        elif len(benchmark_names) == 1:
-            benchmarks = [benchmarks] * len(models)
+
+            # Override benchmark if it is predefined
+            for i in range(len(models)):
+                if models[i]._benchmark_index is not None:
+                    benchmarks[i] = self._benchmarks_list[models[i]._benchmark_index]
+
+        # Use provided benchmarks
         else:
             benchmarks = self.get_models_by_names(
                 benchmark_names, self._benchmarks_list
             )
-
-        # Get benchmark if it is predefined
-        for i in range(len(models)):
-            if models[i]._benchmark_index is not None:
-                benchmarks[i] = self._benchmarks_list[models[i]._benchmark_index]
+            if len(benchmark_names) == 1:
+                benchmarks = benchmarks * len(models)
 
         return [models, benchmarks]
 
