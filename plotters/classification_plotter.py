@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
 from RPP.plotters.plotter import Plotter
-from RPP.data.models import ClassificationModel, Model
+from RPP.data.models import ClassificationModel
+from RPP.figures.classification_axes import ClassficationAxes
 from RPP.utils.utils import (
     calculate_alpha,
     beautify_label,
@@ -32,6 +33,7 @@ class ClassificationPlotter(Plotter):
 
         # Add classification specific parameters
         self._model_class = ClassificationModel
+        self._axes_class = ClassficationAxes
         self._background = background
         self._background_label = beautify_label(background)
         self._show_cuts = show_cuts
