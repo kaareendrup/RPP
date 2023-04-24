@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Union
 
 import numpy as np
 from matplotlib.figure import Figure
@@ -14,6 +14,7 @@ class RPPAxes(Axes):
         fig: Figure, 
         mpl_axis: Axes, 
         plotter: Plotter,
+        index: Union[int, List[int]],
         *args, 
         **kwargs,
     ):
@@ -33,6 +34,8 @@ class RPPAxes(Axes):
         )
 
         self._plotter: Plotter = plotter
+        self._figure_index = index
+        self._subplot_args = args
 
         # Remove mpl axes and add new axes to figure
         fig.delaxes(mpl_axis)
@@ -70,4 +73,27 @@ class RPPAxes(Axes):
 
         return ax_min, ax_max
 
+    def get_axis_neighbour(self, direction: str) -> Axes:
 
+        assert (
+            len(self._subplot_args) > 1 or
+            (len(self._subplot_args) == 1 and self._subplot_args[0] != 1) 
+        ), "Cannot find neighbour on figure with only 1 subplot."
+
+        dir_dict = {'above': -1, 'below': 1, 'left': -1, 'right': 1}
+        self_index = self._figure_index
+
+        if direction in ['left', 'right']:
+            neighbour_index = self_index + dir_dict[direction]
+
+        elif direction in ['above', 'below']:
+            if len(self._subplot_args) == 1:
+                neighbour_index = self_index + dir_dict[direction]
+            elif len(self._subplot_args) > 1:
+                neighbour_index = self_index + dir_dict[direction]*self._subplot_args[1]
+        
+        else:
+            print("Please specify directon as 'above', 'below', 'left', or 'right'.")
+            exit()
+
+        return self.get_figure().get_axes()[neighbour_index]

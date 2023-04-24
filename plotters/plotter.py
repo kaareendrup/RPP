@@ -255,14 +255,15 @@ class Plotter:
 
         return [models, benchmarks]
 
-
     def subplots(self, *args, **kwargs) -> Axes:
 
         # Set standard figsizes
         if not 'figsize' in kwargs:
-            if len(args) == 1:
+            if len(args) == 0:
                 kwargs['figsize'] = (9,7)
-            if len(args) > 1:
+            elif len(args) == 1:
+                kwargs['figsize'] = (9,args[0]*7)
+            elif len(args) > 1:
                 kwargs['figsize'] = (args[1]*9,args[0]*7)
 
         # Initialize MPL figure and subplots
@@ -275,6 +276,7 @@ class Plotter:
                 fig, 
                 axs, 
                 self, 
+                0,
                 *args, 
                 **kwargs
             )
@@ -284,10 +286,11 @@ class Plotter:
                 self._axes_class(
                     fig, 
                     ax, 
-                    self, 
+                    self,
+                    i, 
                     *args, 
                     **kwargs
-                ) for ax in axs
+                ) for i, ax in enumerate(axs)
             ])
             
         else:
@@ -297,10 +300,11 @@ class Plotter:
                         fig, 
                         ax, 
                         self, 
+                        i*args[1]+j,
                         *args, 
                         **kwargs
-                    ) for ax in axes
-                ] for axes in axs
+                    ) for j, ax in enumerate(axes)
+                ] for i, axes in enumerate(axs)
             ])
 
         return fig, axs

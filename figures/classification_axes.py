@@ -163,28 +163,28 @@ class ClassficationAxes(RPPAxes):
                 label=self._plotter._background_label + r" " + model._label,
             )
 
-            # Force different y-axis if the data has outliers
-            self.shift_axis(m_ones, m_zeros, shift_y=shift_y)
+        # Force different y-axis if the data has outliers
+        self.shift_axis(m_ones, m_zeros, shift_y=shift_y)
 
-            # Add rate info to plot
-            # self.add_rate_info([ax], m, horizontal=True)
+        # Add rate info to plot
+        # self.add_rate_info([ax], m, horizontal=True)
 
-            # Decorate plot
-            self.set_axisbelow(True)
-            self.grid(linestyle="dotted")
-            self.set_xlabel("Energy [MeV]", fontsize=12)
-            self.set_ylabel("Model score", fontsize=12)
-            self.set_title(
-                "Distribution of model score by lepton energy", fontsize=16
-            )
-            leg = self.legend(
-                fontsize=12,
-                loc="upper center",
-                bbox_to_anchor=[0.5, 0.90],
-                markerscale=2,
-            )
-            for lh in leg.legendHandles:
-                lh.set_alpha(1)
+        # Decorate plot
+        self.set_axisbelow(True)
+        self.grid(linestyle="dotted")
+        self.set_xlabel("Energy [MeV]", fontsize=12)
+        self.set_ylabel("Model score", fontsize=12)
+        self.set_title(
+            "Distribution of model score by lepton energy", fontsize=16
+        )
+        leg = self.legend(
+            fontsize=12,
+            loc="upper center",
+            bbox_to_anchor=[0.5, 0.90],
+            markerscale=2,
+        )
+        for lh in leg.legendHandles:
+            lh.set_alpha(1)
 
     def score_comparison(
         self,
@@ -236,14 +236,14 @@ class ClassficationAxes(RPPAxes):
                 label=label,
             )
 
-            # Decorate plot
-            self.set_axisbelow(True)
-            self.grid(linestyle="dotted")
-            self.set_xlabel(benchmark._label, fontsize=12)
-            self.set_title("Distribution of model score", fontsize=16)
-            leg = self.legend(fontsize=12, markerscale=2, loc="center right")
-            for lh in leg.legendHandles:
-                lh.set_alpha(1)
+        # Decorate plot
+        self.set_axisbelow(True)
+        self.grid(linestyle="dotted")
+        self.set_xlabel(benchmark._label, fontsize=12)
+        self.set_title("Distribution of model score", fontsize=16)
+        leg = self.legend(fontsize=12, markerscale=2, loc="center right")
+        for lh in leg.legendHandles:
+            lh.set_alpha(1)
 
             # # Add rates
             # self.add_rate_info(
@@ -258,13 +258,13 @@ class ClassficationAxes(RPPAxes):
             #     plot_bg=not is_sig,
             # )
 
-            self.set_ylabel(model._label, fontsize=12)
+        self.set_ylabel(model._label, fontsize=12)
 
-            # Force shifted axes if the data has outliers
-            self.shift_axis(b_preds, b_preds, shift_x=shift_x)
-            self.shift_axis(m_preds, m_preds, shift_y=shift_y)
+        # Force shifted axes if the data has outliers
+        self.shift_axis(b_preds, b_preds, shift_x=shift_x)
+        self.shift_axis(m_preds, m_preds, shift_y=shift_y)
 
-    def plot_score_by_position(
+    def score_by_position(
         self,
         dimensions: Tuple[int],
         model_names: Optional[List[str]] = None,
@@ -342,144 +342,149 @@ class ClassficationAxes(RPPAxes):
                 alpha=alpha,
             )
 
-            dim_labels = ['x', 'y', 'z']
-            self.set_xlabel(dim_labels[dimensions[0]]+' [cm]', fontsize=12)
-            self.set_ylabel(dim_labels[dimensions[1]]+' [cm]', fontsize=12)
+        dim_labels = ['x', 'y', 'z']
+        self.set_xlabel(dim_labels[dimensions[0]]+' [cm]', fontsize=12)
+        self.set_ylabel(dim_labels[dimensions[1]]+' [cm]', fontsize=12)
 
-            leg = self.legend(loc="upper right")
-            for lh in leg.legendHandles:
-                lh.set_alpha(1)
+        leg = self.legend(loc="upper right")
+        for lh in leg.legendHandles:
+            lh.set_alpha(1)
 
-    # def plot_score_ratio_by_distance(
-    #     self,
-    #     model_names: Optional[List[str]] = None,
-    #     benchmark_names: Optional[List[str]] = None,
-    #     thresholds: Optional[List[float]] = None,
-    #     bins: Optional[int] = 20,
-    #     range: Optional[List[float]] = None,
-    # ):
-    #     # Add the correct models and benchmarks if not supplied
-    #     models, benchmarks = self.get_models_and_benchmarks(
-    #         model_names, benchmark_names
-    #     )
+    def score_hist_by_distance(
+        self,
+        model_names: Optional[List[str]] = None,
+        thresholds: Optional[List[float]] = None,
+        bins: Optional[int] = 20,
+        range: Optional[List[float]] = None,
+    ):
+        # Add the correct models and benchmarks if not supplied
+        models = self._plotter.get_models_by_names(model_names)
 
-    #     if thresholds == None:
-    #         thresholds = [[None] * 2] * len(models)
-    #     else:
-    #         thresholds = np.array(thresholds).reshape(len(models), 2, 2)
+        if thresholds == None:
+            thresholds = [None] * len(models)
 
-    #     # Loop over models with the respective cuts
-    #     for model, benchmark, cuts_list in zip(models, benchmarks, thresholds):
-    #         if model._lepton_pos is None:
-    #             print("{}: No position found. Skipping.".format(model._name))
-    #             continue
+        # Store data to use by ratio plots
+        self._model_labels, self._model_counts, self._model_bins = [], [], []
 
-    #         _, axses = plt.subplots(
-    #             2,
-    #             1 + (benchmark is not None),
-    #             sharex=True,
-    #             figsize=(9 * (1 + (benchmark is not None)), 8),
-    #             gridspec_kw={"wspace": 0.3, "hspace": 0.05, "height_ratios": [3, 1]},
-    #             squeeze=False,
-    #         )
+        # Loop over models with the respective cuts
+        for model, cuts in zip(models, thresholds):
+            if model._lepton_pos is None:
+                print("{}: No position found. Skipping.".format(model._name))
+                continue
 
-    #         for m, axs, cuts in zip([model, benchmark], axses.T, cuts_list):
-    #             # Get true and false rates
-    #             if cuts is None:
-    #                 model.calculate_target_rates()
-    #                 cuts = [
-    #                     m._performance_rates[m._target_curve_type][0][2],
-    #                     1
-    #                     - m.get_background_model()._performance_rates[
-    #                         m._target_curve_type
-    #                     ][0][2],
-    #                 ]
+            # Get true and false rates
+            if cuts is None:
+                model.calculate_target_rates()
+                cuts = [
+                    model._performance_rates[model._target_curve_type][0][2],
+                    1
+                    - model.get_background_model()._performance_rates[
+                        model._target_curve_type
+                    ][0][2],
+                ]
 
-    #             pos_target_true = m._lepton_pos[
-    #                 np.where((m._truths == 1) & (m._predictions > cuts[0]))
-    #             ]
-    #             pos_target_false = m._lepton_pos[
-    #                 np.where((m._truths == 1) & (m._predictions < cuts[1]))
-    #             ]
-    #             pos_background_true = m._lepton_pos[
-    #                 np.where((m._truths == 0) & (m._predictions < cuts[1]))
-    #             ]
-    #             pos_background_false = m._lepton_pos[
-    #                 np.where((m._truths == 0) & (m._predictions > cuts[0]))
-    #             ]
+            pos_target_true = model._lepton_pos[
+                np.where((model._truths == 1) & (model._predictions > cuts[0]))
+            ]
+            pos_target_false = model._lepton_pos[
+                np.where((model._truths == 1) & (model._predictions < cuts[1]))
+            ]
+            pos_background_true = model._lepton_pos[
+                np.where((model._truths == 0) & (model._predictions < cuts[1]))
+            ]
+            pos_background_false = model._lepton_pos[
+                np.where((model._truths == 0) & (model._predictions > cuts[0]))
+            ]
 
-    #             positions_list = [
-    #                 [pos_target_true, pos_target_false],
-    #                 [pos_background_true, pos_background_false],
-    #             ]
-    #             labels_list = [
-    #                 [
-    #                     self._target_label,
-    #                     self._target_label
-    #                     + " ("
-    #                     + self._background_label
-    #                     + r"$^{ID}$)",
-    #                 ],
-    #                 [
-    #                     self._background_label,
-    #                     self._background_label
-    #                     + " ("
-    #                     + self._target_label
-    #                     + r"$^{ID}$)",
-    #                 ],
-    #             ]
+            positions_list = [
+                [pos_target_true, pos_target_false],
+                [pos_background_true, pos_background_false],
+            ]
+            labels_list = [
+                [
+                    self._plotter._target_label,
+                    self._plotter._target_label
+                    + " ("
+                    + self._plotter._background_label
+                    + r"$^{ID}$)",
+                ],
+                [
+                    self._plotter._background_label,
+                    self._plotter._background_label
+                    + " ("
+                    + self._plotter._target_label
+                    + r"$^{ID}$)",
+                ],
+            ]
 
-    #             # Plot
-    #             for positions, labels, colors, color_comp in zip(
-    #                 positions_list,
-    #                 labels_list,
-    #                 np.array(self._color_dict["particles"][:4]).reshape(2, -1),
-    #                 self._color_dict["compare"],
-    #             ):
-    #                 radii_true = np.sqrt(
-    #                     positions[0][:, 0] ** 2 + positions[0][:, 1] ** 2
-    #                 )
-    #                 radii_false = np.sqrt(
-    #                     positions[1][:, 0] ** 2 + positions[1][:, 1] ** 2
-    #                 )
+            # Plot
+            for positions, labels, colors in zip(
+                positions_list,
+                labels_list,
+                np.array(self._plotter._color_dict["particles"][:4]).reshape(2, -1),
+            ):
+                radii_true = np.sqrt(
+                    positions[0][:, 0] ** 2 + positions[0][:, 1] ** 2
+                )
+                radii_false = np.sqrt(
+                    positions[1][:, 0] ** 2 + positions[1][:, 1] ** 2
+                )
 
-    #                 counts_true, bins_true = np.histogram(
-    #                     radii_true, bins=bins, range=range
-    #                 )
-    #                 counts_false, _ = np.histogram(radii_false, bins=bins_true)
+                counts_true, bins_true = np.histogram(
+                    radii_true, bins=bins, range=range
+                )
+                counts_false, _ = np.histogram(radii_false, bins=bins_true)
+                bin_centers = bins_true[:-1] + (bins_true[1] - bins_true[0]) / 2
 
-    #                 axs[0].stairs(
-    #                     counts_true, bins_true, color=colors[0], label=labels[0]
-    #                 )
-    #                 axs[0].stairs(
-    #                     counts_false, bins_true, color=colors[1], label=labels[1]
-    #                 )
+                self.stairs(
+                    counts_true, bins_true, color=colors[0], label=labels[0]
+                )
+                self.stairs(
+                    counts_false, bins_true, color=colors[1], label=labels[1]
+                )
 
-    #                 ratios = counts_false / counts_true
-    #                 bin_centers = bins_true[:-1] + (bins_true[1] - bins_true[0]) / 2
+                self._model_counts.append([counts_true, counts_false])
+                self._model_labels.append(labels[0])
+                self._model_bins.append(bin_centers)
 
-    #                 axs[1].plot(
-    #                     bin_centers,
-    #                     ratios,
-    #                     color=color_comp,
-    #                     marker=".",
-    #                     ls="dotted",
-    #                     label=labels[0],
-    #                 )
+        # Decorate plot
+        self.grid(linestyle="dotted")
+        self.legend(fontsize=12)
 
-    #             # Decorate plot
-    #             axs[0].grid(linestyle="dotted")
-    #             axs[0].legend(fontsize=12)
+        self.set_title("False prediction ratio - " + model._name, fontsize=16)
 
-    #             axs[0].set_title("False prediction ratio - " + m._name, fontsize=16)
+        self.set_ylim(0)
+        self.grid(linestyle="dotted")
+        self.set_xlabel("R [cm]", fontsize=12)
+        self.set_ylabel("Counts", fontsize=12)
+        self.legend(fontsize=12)
 
-    #             axs[1].set_ylim(0)
-    #             axs[1].grid(linestyle="dotted")
-    #             axs[1].set_xlabel("R [cm]", fontsize=12)
-    #             axs[1].legend(fontsize=12)
+    def score_ratio_by_distance(
+        self,
+        link_axis: Optional[RPPAxes] = None,
+    ):
+        if link_axis is None:
+            link_axis = self.get_axis_neighbour(direction='above')
 
-    #         axses[0, 0].set_ylabel("Counts", fontsize=12)
-    #         axses[1, 0].set_ylabel("Ratio", fontsize=12)
+        for counts, label, bin_centers, color_comp in zip(
+            link_axis._model_counts, 
+            link_axis._model_labels,
+            link_axis._model_bins,
+            self._plotter._color_dict["compare"],
+        ):
+            counts_false, counts_true = counts[0], counts[1]
 
-    #         plt.savefig(self._plot_dir + model._title + "_scores_by_distance.png")
-    #         plt.close()
+            ratios = counts_false / counts_true
+
+            self.plot(
+                bin_centers,
+                ratios,
+                color=color_comp,
+                marker=".",
+                ls="dotted",
+                label=label,
+            )
+
+        self.legend(fontsize=12)
+        self.set_xlabel("R [cm]", fontsize=12)
+        self.set_ylabel("Ratio", fontsize=12)
