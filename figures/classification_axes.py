@@ -10,18 +10,18 @@ from RPP.utils.utils import (
     curve_config_dict,
 )
 
-class ClassficationAxes(RPPAxes):
+class ClassificationAxes(RPPAxes):
 
     def score_hist(
         self,
-        model_names: Optional[List[str]] = None,
+        models: Optional[List[str]] = None,
         n_bins: Optional[int] = 100,
         log_y: Optional[bool] = False,
         shift_x: Optional[bool] = False,
     ):
 
         # Add the correct model 
-        models = self._plotter.get_models_by_names(model_names)
+        models = self._plotter.get_models_by_names(models)
 
         for model, ls in zip(models, self._plotter._style_dict["histogram"]):
             
@@ -69,10 +69,10 @@ class ClassficationAxes(RPPAxes):
     def performance_curve(
         self,
         curve_type: str = "ROC",
-        model_names: Optional[List[str]] = None,
-        benchmark_names: Optional[List[str]] = None,
+        models: Optional[List[str]] = None,
+        benchmarks: Optional[List[str]] = None,
         log_x: Optional[bool] = False,
-        get_background: Optional[bool] = False,
+        background: Optional[bool] = False,
     ):
         # Get curve type and label configuration
         (
@@ -83,20 +83,20 @@ class ClassficationAxes(RPPAxes):
         ) = curve_config_dict[curve_type]
 
         # Get correct target label
-        if not get_background:
+        if not background:
             target = self._plotter._target_label
         else:
             target = self._plotter._background_label
 
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self._plotter.get_models_and_benchmarks(
-            model_names, benchmark_names
+            models, benchmarks
         )
 
         # Loop over each model and benchmark and add data to plot
         for m in models + benchmarks:
             if m is not None:
-                model = m if not get_background else m.get_background_model()
+                model = m if not background else m.get_background_model()
 
                 # Add data to plot
                 x_rate, y_rate, _, auc = model.get_performance_curve(curve_type)
@@ -128,11 +128,11 @@ class ClassficationAxes(RPPAxes):
    
     def score_by_energy(
         self,
-        model_names: Optional[List[str]] = None,
+        models: Optional[List[str]] = None,
         shift_y: Optional[bool] = False,
     ):
         # Add the correct models
-        models = self._plotter.get_models_by_names(model_names)
+        models = self._plotter.get_models_by_names(models)
 
         # Loop over models and add data to plot
         for model in models:
@@ -191,15 +191,15 @@ class ClassficationAxes(RPPAxes):
 
     def score_comparison(
         self,
-        model_names: Optional[List[str]] = None,
-        benchmark_names: Optional[List[str]] = None,
+        models: Optional[List[str]] = None,
+        benchmarks: Optional[List[str]] = None,
         background: Optional[bool] = False,
         shift_x: Optional[bool] = True,
         shift_y: Optional[bool] = True,
     ):
         # Add the correct models and benchmarks if not supplied
         models, benchmarks = self._plotter.get_models_and_benchmarks(
-            model_names, benchmark_names
+            models, benchmarks
         )
 
         # Loop over models and add data to plot
@@ -252,14 +252,14 @@ class ClassficationAxes(RPPAxes):
     def score_by_position(
         self,
         dimensions: Tuple[int],
-        model_names: Optional[List[str]] = None,
+        models: Optional[List[str]] = None,
         thresholds: Optional[List[float]] = None,
-        get_background: Optional[bool] = False,
-        get_correct: Optional[bool] = True,
-        get_discarded: Optional[bool] = False,
+        background: Optional[bool] = False,
+        correct: Optional[bool] = True,
+        discarded: Optional[bool] = False,
     ):
         # Add the correct models
-        models = self._plotter.get_models_by_names(model_names)
+        models = self._plotter.get_models_by_names(models)
 
         if thresholds == None:
             thresholds = [None] * len(models)
@@ -284,10 +284,10 @@ class ClassficationAxes(RPPAxes):
                 ]
 
             # Get true, false and discarded rates and label
-            if not get_background:
+            if not background:
                 truth_bool = model._truths == 1
 
-                if get_correct:
+                if correct:
                     label = self._plotter._target_label
                     pred_bool = model._predictions > cuts[0]
                 else:
@@ -297,7 +297,7 @@ class ClassficationAxes(RPPAxes):
             else:
                 truth_bool = model._truths == 0
 
-                if get_correct:
+                if correct:
                     label = self._plotter._background_label
                     pred_bool = model._predictions < cuts[1]
                 else:
@@ -305,7 +305,7 @@ class ClassficationAxes(RPPAxes):
                     pred_bool = model._predictions > cuts[0]
 
             # Override if discarded is needed
-            if get_discarded:
+            if discarded:
                 pred_bool = (
                     model._predictions > cuts[1]) & (model._predictions < cuts[0]
                 )
@@ -340,13 +340,13 @@ class ClassficationAxes(RPPAxes):
 
     def score_hist_by_distance(
         self,
-        model_names: Optional[List[str]] = None,
+        models: Optional[List[str]] = None,
         thresholds: Optional[List[float]] = None,
         bins: Optional[int] = 20,
         range: Optional[List[float]] = None,
     ):
         # Add the correct models and benchmarks if not supplied
-        models = self._plotter.get_models_by_names(model_names)
+        models = self._plotter.get_models_by_names(models)
 
         if thresholds == None:
             thresholds = [None] * len(models)
@@ -554,3 +554,4 @@ class ClassficationAxes(RPPAxes):
                     bbox=props,
                     zorder=6,
                 )
+                

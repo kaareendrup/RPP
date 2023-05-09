@@ -126,6 +126,7 @@ class Plotter:
         )
 
         self._models_list.append(model)
+        return model
 
     def add_benchmark(
         self,
@@ -207,6 +208,8 @@ class Plotter:
             for model in self._models_list:
                 if model._name in link_models:
                     model.add_benchmark(len(self._benchmarks_list) - 1)
+                    
+        return model
 
     def get_models_by_names(
         self, model_names: List[str], model_list: Optional[List[Model]] = None

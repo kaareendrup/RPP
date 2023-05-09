@@ -6,6 +6,8 @@ from matplotlib.axes import Axes
 
 from RPP.plotters.plotter import Plotter
 from RPP.data.models import Model
+from RPP.data.models import RegressionModel
+from RPP.figures.regression_axes import RegressionAxes
 from RPP.utils.maths.maths import bin_residual_width, w_errorprop
 
 
@@ -19,6 +21,9 @@ class RegressionPlotter(Plotter):
         self._bin_positions = []
         self._bin_centers = []
         self._n_residual_bins = []
+
+        self._model_class = RegressionModel
+        self._axes_class = RegressionAxes
 
     def plot_2Dhist(self, bins: Optional[int] = 100):
         for model_list in [self._models_list, self._benchmarks_list]:
@@ -199,6 +204,3 @@ class RegressionPlotter(Plotter):
             )
             ax_top.set_zorder(ax_back.get_zorder() + 1)
             ax_top.patch.set_visible(False)
-
-        plt.savefig(self._plot_dir + model._name + "_resolution.png")
-        plt.close()
