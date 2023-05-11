@@ -137,6 +137,7 @@ class Plotter:
         color: Optional[str] = None,
         database_file: Optional[str] = None,
         cut_functions: Optional[List[Cutter]] = None,
+        pred_label: Optional[str] = None,
         **kwargs
     ):
         # Get color from dict if it is not defined
@@ -174,8 +175,8 @@ class Plotter:
             # # Get correct target for sqlite query
             model_map_name = model_name.split("_")[0]
             pred_target = (
-                fiTQun_dict[self._target]
-                if model_map_name == "fiTQun"
+                pred_label
+                if pred_label is not None
                 else self._target
             )
 
