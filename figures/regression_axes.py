@@ -11,6 +11,14 @@ from RPP.utils.maths.maths import bin_residual_width, w_errorprop
 
 class RegressionAxes(RPPAxes):
 
+    def hist1D(
+        self,
+        model: Model,
+        bins: Optional[int] = 100,
+        *kwargs,
+    ):
+        h = self.hist(model._predictions, bins=bins, *kwargs)
+
     def hist2D(
         self, 
         model: Model,
@@ -30,7 +38,7 @@ class RegressionAxes(RPPAxes):
         )
 
         self.set_title(
-            "Model performance on {}".format(self._plotter._target), fontsize=12
+            "Model performance on {} - {}".format(self._plotter._target, model._label), fontsize=12
         )
 
     def scatter2D(
