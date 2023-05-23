@@ -206,9 +206,9 @@ class Plotter:
 
         # Set as default benchmark for linked models
         if link_models is not None:
-            for model in self._models_list:
-                if model._name in link_models:
-                    model.add_benchmark(len(self._benchmarks_list) - 1)
+            for pred_model in self._models_list:
+                if pred_model._name in link_models:
+                    pred_model.add_benchmark(len(self._benchmarks_list) - 1)
                     
         return model
 
