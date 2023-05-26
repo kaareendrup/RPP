@@ -257,6 +257,21 @@ class Plotter:
                 benchmarks = benchmarks * len(models)
 
         return [models, benchmarks]
+    
+    def get_benchmarks(self, models: List[Model]) -> List[Model]:
+
+        # Extract benchmarks
+        if len(self._benchmarks_list) == 0:
+            benchmarks = [None] * len(models)
+        else:
+            benchmarks = [self._benchmarks_list[0]] * len(models)
+
+        # Override benchmark if it is predefined
+        for i in range(len(models)):
+            if models[i]._benchmark_index is not None:
+                benchmarks[i] = self._benchmarks_list[models[i]._benchmark_index]
+
+        return [benchmarks]
 
     def subplots(self, *args, **kwargs) -> Axes:
 

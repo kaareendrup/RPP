@@ -6,14 +6,14 @@ from matplotlib.figure import Figure
 from matplotlib.axes._axes import Axes
 
 from RPP.figures.axes import RPPAxes
-from RPP.data.models import Model
+from RPP.data.models import RegressionModel
 from RPP.utils.maths.maths import bin_residual_width, w_errorprop
 
 class RegressionAxes(RPPAxes):
 
     def hist1D(
         self,
-        model: Model,
+        model: RegressionModel,
         bins: Optional[int] = 100,
         *kwargs,
     ):
@@ -21,7 +21,7 @@ class RegressionAxes(RPPAxes):
 
     def hist2D(
         self, 
-        model: Model,
+        model: RegressionModel,
         bins: Optional[int] = 100
     ):
 
@@ -43,7 +43,7 @@ class RegressionAxes(RPPAxes):
 
     def scatter2D(
         self, 
-        model: Model,
+        model: RegressionModel,
     ):
 
         self.scatter(
@@ -63,7 +63,7 @@ class RegressionAxes(RPPAxes):
 
     def get_residual_widths(
         self,
-        model: Model,
+        model: RegressionModel,
         verbose: Optional[bool] = False,
         relative: Optional[bool] = False,
     ):
@@ -103,8 +103,8 @@ class RegressionAxes(RPPAxes):
 
     def resolution(
         self,
-        models: Optional[List[str]] = None,
-        benchmarks: Optional[List[str]] = None,
+        models: List[RegressionModel],
+        benchmarks: Optional[List[RegressionModel]] = None,
         n_residual_bins: Optional[int] = 10,
         relative: Optional[bool] = False,
     ):
@@ -113,10 +113,9 @@ class RegressionAxes(RPPAxes):
 
         label = "relative" if relative else "absolute" + self._plotter._unit_str
 
-        # Add the correct models and benchmarks if not supplied
-        self._models, self._benchmarks = self._plotter.get_models_and_benchmarks(
-            models, benchmarks
-        )
+        # Add the correct benchmarks if not supplied
+        if benchmarks is None:
+            benchmarks = self._plotter.get_benchmarks(models)
         
         # Make the bins to calculate w for
         self._n_residual_bins = n_residual_bins
