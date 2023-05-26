@@ -1,6 +1,10 @@
-from typing import Dict, List, Tuple, Optional, Callable
+from typing import Dict, List, Optional, Callable
 
+import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+
+from matplotlib.axes._axes import Axes
 from matplotlib.colors import ListedColormap
 
 from RPP.utils.fiTQun_schemes import pred_pure
@@ -32,6 +36,9 @@ class Plotter:
 
         self._models_list: List[Model] = []
         self._benchmarks_list: List[Model] = []
+
+        self._open_figure = None
+        self._axes_class = None
 
     def load_csv(
         self,
@@ -119,6 +126,7 @@ class Plotter:
         )
 
         self._models_list.append(model)
+        return model
 
     def add_benchmark(
         self,
@@ -129,6 +137,7 @@ class Plotter:
         color: Optional[str] = None,
         database_file: Optional[str] = None,
         cut_functions: Optional[List[Cutter]] = None,
+        pred_label: Optional[str] = None,
         **kwargs
     ):
         # Get color from dict if it is not defined
@@ -166,8 +175,8 @@ class Plotter:
             # # Get correct target for sqlite query
             model_map_name = model_name.split("_")[0]
             pred_target = (
-                fiTQun_dict[self._target]
-                if model_map_name == "fiTQun"
+                pred_label
+                if pred_label is not None
                 else self._target
             )
 
@@ -197,14 +206,20 @@ class Plotter:
 
         # Set as default benchmark for linked models
         if link_models is not None:
-            for model in self._models_list:
-                if model._name in link_models:
-                    model.add_benchmark(len(self._benchmarks_list) - 1)
+            for pred_model in self._models_list:
+                if pred_model._name in link_models:
+                    pred_model.add_benchmark(len(self._benchmarks_list) - 1)
+                    
+        return model
 
     def get_models_by_names(
-        self, model_names: List[str], model_list: List[Model]
+        self, model_names: List[str], model_list: Optional[List[Model]] = None
     ) -> List[Model]:
+        
+        # Find models in the models and benchmarks lists from their names
         result_list = []
+        if model_list is None:
+            model_list = self._models_list + self._benchmarks_list
         for name in model_names:
             for model in model_list:
                 if model._name == name:
@@ -213,7 +228,7 @@ class Plotter:
         return result_list
 
     def get_models_and_benchmarks(
-        self, model_names: List[str], benchmark_names: List[str]
+        self, model_names: List[str], benchmark_names: Optional[List[str]] = None
     ) -> List[List[Model]]:
         # Get correct models and benchmarks if not supplied
         if model_names is None:
@@ -242,3 +257,92 @@ class Plotter:
                 benchmarks = benchmarks * len(models)
 
         return [models, benchmarks]
+    
+    def get_benchmarks(self, models: List[Model]) -> List[Model]:
+
+        # Extract benchmarks
+        if len(self._benchmarks_list) == 0:
+            benchmarks = [None] * len(models)
+        else:
+            benchmarks = [self._benchmarks_list[0]] * len(models)
+
+        # Override benchmark if it is predefined
+        for i in range(len(models)):
+            if models[i]._benchmark_index is not None:
+                benchmarks[i] = self._benchmarks_list[models[i]._benchmark_index]
+
+        return [benchmarks]
+
+    def subplots(self, *args, **kwargs) -> Axes:
+
+        # Set standard figsizes
+        if not 'figsize' in kwargs:
+            if len(args) == 0:
+                kwargs['figsize'] = (9,7)
+            elif len(args) == 1:
+                kwargs['figsize'] = (9,args[0]*7)
+            elif len(args) > 1:
+                kwargs['figsize'] = (args[1]*9,args[0]*7)
+
+        # Initialize MPL figure and subplots
+        fig, axs = plt.subplots(*args, **kwargs)
+        self._open_figure = fig
+
+        # Check for dimensions and convert subplot classes
+        if isinstance(axs, Axes):
+            axs = self._axes_class(
+                fig, 
+                axs, 
+                self, 
+                0,
+                *args, 
+                **kwargs
+            )
+
+        elif len(axs.shape) == 1:
+            axs = np.array([
+                self._axes_class(
+                    fig, 
+                    ax, 
+                    self,
+                    i, 
+                    *args, 
+                    **kwargs
+                ) for i, ax in enumerate(axs)
+            ])
+            
+        else:
+            axs = np.array([
+                [
+                    self._axes_class(
+                        fig, 
+                        ax, 
+                        self, 
+                        i*args[1]+j,
+                        *args, 
+                        **kwargs
+                    ) for j, ax in enumerate(axes)
+                ] for i, axes in enumerate(axs)
+            ])
+
+        return fig, axs
+    
+    def savefig(self, path=None):
+
+        # Save figure
+        plt.savefig(path)
+        plt.close()
+        self._open_figure = None
+
+    def show(self):
+
+        # Show figure
+        plt.show()
+        plt.close()
+        self._open_figure = None
+
+    def close(self):
+
+        # Close figure
+        plt.close()
+        self._open_figure = None

@@ -37,7 +37,6 @@ class Model:
         self._lepton_pos = lepton_pos
         self._color = color
         self._cut_functions = copy.deepcopy(cut_functions)
-        self.flush_cut_functions()
 
         self._benchmark_index = None
 
@@ -97,6 +96,8 @@ class ClassificationModel(Model):
         self._target_cuts = target_cuts
         self._bg_cuts = bg_cuts
         self._target_curve_type = target_curve_type
+
+        self.flush_cut_functions()
 
         if reverse:
             self.invert_results()
@@ -207,3 +208,32 @@ class ClassificationModel(Model):
         ][0]
 
         return [default_cutter] + self._cut_functions
+    
+class RegressionModel(Model):
+    def __init__(
+            self,
+            model_name: str,
+            database: str,
+            predictions: ndarray,
+            truths: ndarray,
+            event_nos: ndarray,
+            original_truths: ndarray,
+            energy: ndarray,
+            lepton_pos: ndarray,
+            color: str,
+            cut_functions: Optional[List[Cutter]] = None,
+            pulsemap_name: Optional[str] = None,
+        ):
+            super().__init__(
+                model_name,
+                database,
+                predictions,
+                truths,
+                event_nos,
+                original_truths,
+                energy,
+                lepton_pos,
+                color,
+                cut_functions,
+                pulsemap_name,
+            )
