@@ -26,7 +26,7 @@ class RegressionAxes(RPPAxes):
     ):
 
         h = self.hist2d(
-            model._predictions, model._truths, bins=bins, cmap=self._plotter._cmap
+            model._truths, model._predictions, bins=bins, cmap=self._plotter._cmap
         )
         plt.colorbar(h[3], pad=0.01)
 
