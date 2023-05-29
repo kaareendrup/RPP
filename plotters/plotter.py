@@ -271,7 +271,7 @@ class Plotter:
             if models[i]._benchmark_index is not None:
                 benchmarks[i] = self._benchmarks_list[models[i]._benchmark_index]
 
-        return [benchmarks]
+        return benchmarks
 
     def subplots(self, *args, **kwargs) -> Axes:
 

@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import ListedColormap
 
-from RPP.data.models import ClassificationModel, Model
+from RPP.data.models import ClassificationModel
 from RPP.plotters.classification_plotter import ClassificationPlotter
+from RPP.figures.classification_spatial_axes import ClassificationSpatialAxes
 from RPP.utils.data import query_database
 from RPP.utils.style import dark_colormap
 from RPP.utils.maths.maths import rotate_polar_mean
@@ -25,6 +26,10 @@ class ClassificationSpatialPlotter(ClassificationPlotter):
         **kwargs
     ):
         super().__init__(name, plot_dir, target, background, **kwargs)
+
+        # Add classification specific parameters
+        self._model_class = ClassificationModel
+        self._axes_class = ClassificationSpatialAxes
 
         self._darkmap = darkmap
         self._k = k
