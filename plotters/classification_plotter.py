@@ -1,21 +1,10 @@
 from typing import Dict, List, Optional
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
-
 from RPP.plotters.plotter import Plotter
 from RPP.data.models import ClassificationModel
 from RPP.figures.classification_axes import ClassificationAxes
-from RPP.utils.utils import (
-    calculate_alpha,
-    beautify_label,
-    add_rates,
-    curve_config_dict,
-    shift_axis,
-)
+from RPP.utils.utils import beautify_label
 from RPP.utils.style import basic_pos_dict
-from RPP.utils.data import Cutter
 
 
 class ClassificationPlotter(Plotter):
