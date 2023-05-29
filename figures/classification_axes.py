@@ -185,6 +185,7 @@ class ClassificationAxes(RPPAxes):
         shift_x: Optional[bool] = True,
         shift_y: Optional[bool] = True,
     ):
+        
         # Add the correct benchmarks if not supplied
         if benchmarks is None:
             benchmarks = self._plotter.get_benchmarks(models)
@@ -471,6 +472,7 @@ class ClassificationAxes(RPPAxes):
         annotate: Optional[bool] = True,
         background: Optional[bool] = False,
     ):
+        
         assert self._plot_type in ['score_hist', 'score_by_energy', 'score_comparison'], 'Only plot with model scores can have cuts and rates.'
 
         for i, model in enumerate(self._used_models):
@@ -537,4 +539,3 @@ class ClassificationAxes(RPPAxes):
                     bbox=props,
                     zorder=6,
                 )
-                
