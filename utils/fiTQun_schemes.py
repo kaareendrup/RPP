@@ -4,9 +4,17 @@ import numpy as np
 from RPP.utils.data import query_database
 
 
+fitqun_dict = {
+    'v_e': 'fqe_nll',
+    'v_mu': 'fqmu_nll',
+}
+
 def pred_pure(
     benchmark_file: str, pred_target: str, model_name: str, event_nos: List[int]
 ) -> np.ndarray:
+    # Get correct pred target
+    pred_target = fitqun_dict[pred_target]
+
     # Return the pure predicted value
     pred_query = "SELECT {}, event_no FROM {} WHERE event_no IN {}".format(
         pred_target, model_name, tuple(event_nos)
@@ -19,6 +27,9 @@ def pred_pure(
 def nllh_ratio(
     benchmark_file: str, pred_target: str, model_name: str, event_nos: List[int]
 ) -> np.ndarray:
+    # Get correct pred target
+    pred_target = fitqun_dict[pred_target]
+
     # Return ratio of nllh
     pred_query = (
         "SELECT fqe_nll, fqmu_nll, event_no FROM {} WHERE event_no IN {}".format(
@@ -40,6 +51,9 @@ def nllh_ratio(
 def nllh_diff(
     benchmark_file: str, pred_target: str, model_name: str, event_nos: List[int]
 ) -> np.ndarray:
+    # Get correct pred target
+    pred_target = fitqun_dict[pred_target]
+
     # Return difference in nllh
     pred_query = (
         "SELECT fqe_nll, fqmu_nll, event_no FROM {} WHERE event_no IN {}".format(
