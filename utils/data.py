@@ -5,13 +5,18 @@ import pandas as pd
 import sqlite3
 
 
-def query_database(file: str, query: str) -> pd.DataFrame:
+def query_database(file: str, query: str, sort: Optional[bool] = True) -> pd.DataFrame:
+    # Check if event_no is in the query
+    if sort and not (", event_no" in query or "event_no, " in query):
+        query = query[:7] + 'event_no, ' + query[7:]
+
     # Get truth and predictions from sqlite database
     with sqlite3.connect(file) as con:
         try:
             print("Querying database..")
             pred_data = pd.read_sql(query, con)
-            pred_data.sort_values("event_no", inplace=True, ignore_index=True)
+            if sort:
+                pred_data.sort_values("event_no", inplace=True, ignore_index=True)
             print("Done querying!")
 
         except pd.errors.DatabaseError:

@@ -1,8 +1,6 @@
-from typing import Dict, List, Tuple, Optional
+from typing import List, Tuple, Optional
 
 import numpy as np
-from matplotlib.figure import Figure
-from matplotlib.axes._axes import Axes
 from RPP.data.models import ClassificationModel
 
 from RPP.figures.axes import RPPAxes
